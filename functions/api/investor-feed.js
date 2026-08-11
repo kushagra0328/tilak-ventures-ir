@@ -44,39 +44,28 @@ function normalise(row) {
   const attachment = pick(row, ['ATTACHMENTNAME', 'ATTACHMENT', 'ATTACHMENT_NAME']);
   const id = pick(row, ['NEWSID', 'NEWS_ID', 'SLNO', 'SCRIP_CD']) || `${title}-${rawDate}`;
   const bseLink = pick(row, ['NEWS_LINK', 'NEWSLINK', 'LINK', 'URL']);
-  return {
-    id: String(id),
-    title,
-    date: clean(rawDate) || '',
-    category: classify(title),
-    pdf: attachmentUrl(attachment, rawDate),
-    bse: /^https?:\/\//i.test(String(bseLink || '')) ? bseLink : 'https://www.bseindia.com/corporates/ann.html',
-    source: 'BSE'
-  };
+  return { id: String(id), title, date: clean(rawDate) || '', category: classify(title), pdf: attachmentUrl(attachment, rawDate), bse: /^https?:\/\//i.test(String(bseLink || '')) ? bseLink : 'https://www.bseindia.com/corporates/ann.html', source: 'BSE' };
 }
+
 function resultQuarter(item) {
-  const text = `${item.title} ${item.date}`.toLowerCase();
-  const datePatterns = [
-    {q:'Q1', re:/(?:30|29|28)[./ -]0?6[./ -](20\d{2})|30(?:th)?\s+june[ ,-]+(20\d{2})/i},
-    {q:'Q2', re:/(?:30|29)[./ -]0?9[./ -](20\d{2})|30(?:th)?\s+september[ ,-]+(20\d{2})/i},
-    {q:'Q3', re:/(?:31|30)[./ -]12[./ -](20\d{2})|31(?:st)?\s+december[ ,-]+(20\d{2})/i},
-    {q:'Q4', re:/(?:31|30)[./ -]0?3[./ -](20\d{2})|31(?:st)?\s+march[ ,-]+(20\d{2})/i}
+  const text = `${item.title || ''} ${item.date || ''}`.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+  const patterns = [
+    { q: 'Q1', endMonth: 6, re: /(?:quarter|three months|3 months)[^\d]{0,100}(?:ended|ending)[^\d]{0,30}(?:30|29|28)[.\/-]0?6[.\/-](20\d{2})/i },
+    { q: 'Q2', endMonth: 9, re: /(?:quarter|three months|6 months|half year)[^\d]{0,120}(?:ended|ending)[^\d]{0,30}(?:30|29)[.\/-]0?9[.\/-](20\d{2})/i },
+    { q: 'Q3', endMonth: 12, re: /(?:quarter|three months|nine months)[^\d]{0,120}(?:ended|ending)[^\d]{0,30}(?:31|30)[.\/-]12[.\/-](20\d{2})/i },
+    { q: 'Q4', endMonth: 3, re: /(?:quarter|three months|year)[^\d]{0,120}(?:ended|ending)[^\d]{0,30}(?:31|30)[.\/-]0?3[.\/-](20\d{2})/i },
+    { q: 'Q1', endMonth: 6, re: /(?:june|jun)[\s,.-]*(?:30|29|28)(?:st|th|nd|rd)?[\s,.-]+(20\d{2})/i },
+    { q: 'Q2', endMonth: 9, re: /(?:september|sep)[\s,.-]*(?:30|29)(?:st|th|nd|rd)?[\s,.-]+(20\d{2})/i },
+    { q: 'Q3', endMonth: 12, re: /(?:december|dec)[\s,.-]*(?:31|30)(?:st|th|nd|rd)?[\s,.-]+(20\d{2})/i },
+    { q: 'Q4', endMonth: 3, re: /(?:march|mar)[\s,.-]*(?:31|30)(?:st|th|nd|rd)?[\s,.-]+(20\d{2})/i },
+    { q: 'Q1', endMonth: 6, re: /(?:30|29|28)(?:st|th|nd|rd)?[.\/-]0?6[.\/-](20\d{2})/i },
+    { q: 'Q2', endMonth: 9, re: /(?:30|29)(?:st|th|nd|rd)?[.\/-]0?9[.\/-](20\d{2})/i },
+    { q: 'Q3', endMonth: 12, re: /(?:31|30)(?:st|th|nd|rd)?[.\/-]12[.\/-](20\d{2})/i },
+    { q: 'Q4', endMonth: 3, re: /(?:31|30)(?:st|th|nd|rd)?[.\/-]0?3[.\/-](20\d{2})/i }
   ];
-  for (const p of datePatterns) {
+  for (const p of patterns) {
     const match = text.match(p.re);
-    if (match) {
-      const year = Number(match[1] || match[2]);
-      return {quarter:p.q, endYear:year};
-    }
-  }
-  const parsed = new Date(String(item.date || '').replace('T', ' '));
-  if (!Number.isNaN(parsed.getTime())) {
-    const month = parsed.getMonth() + 1;
-    const year = parsed.getFullYear();
-    if ([7,8,9].includes(month)) return {quarter:'Q1', endYear:year};
-    if ([10,11,12].includes(month)) return {quarter:'Q2', endYear:year};
-    if ([1,2].includes(month)) return {quarter:'Q3', endYear:year - 1};
-    if ([4,5,6].includes(month)) return {quarter:'Q4', endYear:year};
+    if (match) return { quarter: p.q, endYear: Number(match[1]), endMonth: p.endMonth };
   }
   return null;
 }
@@ -94,13 +83,13 @@ function resultRows(items) {
     if (!fy) continue;
     const key = `${fy}|${parsed.quarter}`;
     const current = groups.get(key);
-    if (!current || new Date(String(item.date).replace('T',' ')) > new Date(String(current.date).replace('T',' '))) {
-      groups.set(key, {...item, fiscalYear:fy, quarter:parsed.quarter, period:`${parsed.quarter}-${String(parsed.endYear).slice(-2)}`});
-    }
+    const currentTime = current ? new Date(String(current.date).replace('T', ' ')).getTime() : -Infinity;
+    const itemTime = new Date(String(item.date).replace('T', ' ')).getTime();
+    if (!current || itemTime > currentTime) groups.set(key, { ...item, fiscalYear: fy, quarter: parsed.quarter, period: `${parsed.quarter}-${String(parsed.endYear).slice(-2)}` });
   }
   const byYear = new Map();
   for (const item of groups.values()) {
-    if (!byYear.has(item.fiscalYear)) byYear.set(item.fiscalYear, {financialYear:item.fiscalYear,q1:null,q2:null,q3:null,q4:null,h:null,y:null});
+    if (!byYear.has(item.fiscalYear)) byYear.set(item.fiscalYear, { financialYear: item.fiscalYear, q1: null, q2: null, q3: null, q4: null, h: null, y: null });
     const row = byYear.get(item.fiscalYear);
     row[item.quarter.toLowerCase()] = item;
     if (item.quarter === 'Q2' && /half|six months|half year/i.test(item.title)) row.h = item;
@@ -110,33 +99,33 @@ function resultRows(items) {
     if (!row.h) row.h = row.q2;
     if (!row.y) row.y = row.q4;
   }
-  return [...byYear.values()].sort((a,b)=>b.financialYear.localeCompare(a.financialYear));
+  return [...byYear.values()].sort((a, b) => b.financialYear.localeCompare(a.financialYear));
 }
 async function fetchPage(page, from, to) {
-  const params = new URLSearchParams({pageno:String(page),strCat:'-1',strPrevDate:from,strScrip:'503663',strSearch:'P',strToDate:to,strType:'C',subcategory:''});
-  const response = await fetch(`${BSE_API}?${params.toString()}`, {headers:{'Accept':'application/json, text/plain, */*','Referer':'https://www.bseindia.com/corporates/ann.html','User-Agent':'Mozilla/5.0 (compatible; TilakVenturesInvestorRelations/1.0)'},cf:{cacheTtl:300,cacheEverything:true}});
+  const params = new URLSearchParams({ pageno: String(page), strCat: '-1', strPrevDate: from, strScrip: '503663', strSearch: 'P', strToDate: to, strType: 'C', subcategory: '' });
+  const response = await fetch(`${BSE_API}?${params.toString()}`, { headers: { Accept: 'application/json, text/plain, */*', Referer: 'https://www.bseindia.com/corporates/ann.html', 'User-Agent': 'Mozilla/5.0 (compatible; TilakVenturesInvestorRelations/1.0)' }, cf: { cacheTtl: 300, cacheEverything: true } });
   if (!response.ok) throw new Error(`BSE responded with ${response.status}`);
   return response.json();
 }
 export async function onRequestGet({ request }) {
   const url = new URL(request.url);
   const page = Math.max(1, Number(url.searchParams.get('page') || 1));
-  const from = url.searchParams.get('from') || '20200101';
+  const from = url.searchParams.get('from') || '20140101';
   const to = url.searchParams.get('to') || new Date().toISOString().slice(0, 10).replaceAll('-', '');
   const category = url.searchParams.get('category') || '';
   const query = (url.searchParams.get('q') || '').trim().toLowerCase();
-  const pageCount = category === 'Financial Results' ? 8 : 1;
+  const pageCount = category === 'Financial Results' ? 15 : 1;
   try {
-    const payloads = await Promise.all(Array.from({length:pageCount},(_,i)=>fetchPage(i+1,from,to)));
+    const payloads = await Promise.all(Array.from({ length: pageCount }, (_, i) => fetchPage(i + 1, from, to)));
     const rows = payloads.flatMap(payload => Array.isArray(payload?.Table) ? payload.Table.map(normalise) : []);
-    const unique = [...new Map(rows.map(item=>[item.id,item])).values()];
+    const unique = [...new Map(rows.map(item => [item.id, item])).values()];
     const filtered = unique.filter(item => (!category || item.category === category) && (!query || item.title.toLowerCase().includes(query)));
     const total = Number(payloads[0]?.Table1?.[0]?.ROWCNT || payloads[0]?.Table1?.[0]?.RowCnt || filtered.length || 0);
     const results = category === 'Financial Results' ? resultRows(filtered) : [];
     const pageSize = 20;
-    const items = category === 'Financial Results' ? results.slice((page-1)*pageSize,page*pageSize) : filtered.slice((page-1)*pageSize,page*pageSize);
-    return Response.json({source:'BSE Limited',scripCode:'503663',company:'Tilak Ventures Limited',page,total:category === 'Financial Results' ? results.length : total,items,results:category === 'Financial Results' ? results : undefined,fetchedAt:new Date().toISOString()},{headers:{'Cache-Control':'public, max-age=120, s-maxage=300, stale-while-revalidate=600'}});
+    const items = category === 'Financial Results' ? results.slice((page - 1) * pageSize, page * pageSize) : filtered.slice((page - 1) * pageSize, page * pageSize);
+    return Response.json({ source: 'BSE Limited', scripCode: '503663', company: 'Tilak Ventures Limited', page, total: category === 'Financial Results' ? results.length : total, items, results: category === 'Financial Results' ? results : undefined, fetchedAt: new Date().toISOString() }, { headers: { 'Cache-Control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600' } });
   } catch (error) {
-    return Response.json({source:'BSE Limited',scripCode:'503663',company:'Tilak Ventures Limited',error:'BSE investor data is temporarily unavailable.',details:error instanceof Error ? error.message : String(error),items:[],results:[]},{status:502,headers:{'Cache-Control':'no-store'}});
+    return Response.json({ source: 'BSE Limited', scripCode: '503663', company: 'Tilak Ventures Limited', error: 'BSE investor data is temporarily unavailable.', details: error instanceof Error ? error.message : String(error), items: [], results: [] }, { status: 502, headers: { 'Cache-Control': 'no-store' } });
   }
 }
