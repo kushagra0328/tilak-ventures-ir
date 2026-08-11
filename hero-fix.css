@@ -1,0 +1,21 @@
+/* Homepage hero visibility fix: final layer intentionally overrides legacy homepage rules. */
+.home-page{background:#f5f6f7;color:#142333;overflow:hidden;height:100vh}
+.home-page .home-hero{height:calc(100vh - 76px);min-height:600px;padding:30px 0 42px;background:#f5f6f7;overflow:hidden;border:0}
+.home-page .hero-card{height:100%;min-height:0;position:relative;overflow:hidden;border-radius:38px;background:#071526;box-shadow:0 22px 60px rgba(7,21,38,.18)}
+.home-page .hero-card:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 76% 42%,rgba(200,150,73,.18),transparent 30%),linear-gradient(115deg,#101c2b 0%,#071526 54%,#061321 100%);z-index:0}
+.home-page .hero-card:after{content:"";position:absolute;inset:auto 0 0;height:45%;background:linear-gradient(0deg,rgba(2,10,18,.62),transparent);z-index:1;pointer-events:none}
+.home-page .hero-grid{height:100%;position:relative;z-index:3;display:grid;grid-template-columns:.86fr 1.14fr;gap:0;align-items:stretch}
+.home-page .hero-copy{position:relative;z-index:5;padding:58px 0 52px 60px;display:flex;flex-direction:column;justify-content:center;max-width:610px}
+.home-page .hero-copy .kicker{font-size:12px;letter-spacing:.27em;color:#d4a35a;font-weight:700;margin:0 0 20px}
+.home-page .hero-copy h1{font-size:clamp(62px,6.8vw,104px);line-height:.84;letter-spacing:.035em;margin:0;font-weight:700;text-transform:uppercase}
+.home-page .title-white{display:block;color:#f6f7f8}.home-page .title-gold{display:block;color:#c89649}.home-page .title-small{display:block;color:#f6f7f8;font-size:.34em;letter-spacing:.38em;margin-top:18px;font-weight:500}
+.home-page .hero-rule{display:block;width:70px;height:2px;background:#c89649;margin:27px 0 23px}
+.home-page .hero-copy .lead{max-width:480px;font-size:13px;line-height:1.75;color:#c6d0d9;margin:0}.home-page .hero-copy .lead strong{color:#fff;font-weight:600}
+.home-page .hero-meta{display:flex;gap:0;margin-top:26px;color:#d2d9df;font-size:10px}.home-page .hero-meta span{padding:0 20px;border-left:1px solid rgba(255,255,255,.18)}.home-page .hero-meta span:first-child{padding-left:0;border-left:0}.home-page .hero-meta b{display:block;color:#a7772b;font-size:8px;letter-spacing:.16em;margin-bottom:5px}
+.home-page .buttons{display:flex;gap:16px;margin-top:28px}.home-page .btn{display:inline-flex;align-items:center;gap:25px;min-height:42px;padding:0 19px;border-radius:2px;font-size:10px;font-weight:600}.home-page .btn.gold{background:#b8863f;color:#fff;border:1px solid #b8863f}.home-page .btn.outline{background:transparent;color:#fff;border:1px solid rgba(200,150,73,.7)}.home-page .btn span{font-size:15px;line-height:1}
+.home-page .hero-building{height:100%;min-width:0;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#071526}
+.home-page .hero-building img{position:relative;z-index:2;display:block;width:118%;height:118%;max-width:none;object-fit:cover;object-position:center;opacity:1;mix-blend-mode:normal}
+.home-page .hero-building:after{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(90deg,#071526 0%,rgba(7,21,38,.7) 8%,rgba(7,21,38,0) 34%),linear-gradient(180deg,rgba(7,21,38,.02),rgba(7,21,38,.25))}
+@media(max-width:1100px){.home-page .hero-copy{padding-left:44px}.home-page .hero-copy h1{font-size:clamp(56px,7vw,86px)}}
+@media(max-width:900px){.home-page{height:auto;min-height:100vh;overflow:auto}.home-page .home-hero{height:auto;min-height:calc(100vh - 76px);padding:20px 0 30px}.home-page .hero-card{height:auto;min-height:760px;border-radius:28px}.home-page .hero-grid{grid-template-columns:1fr}.home-page .hero-copy{padding:55px 42px 15px;max-width:none}.home-page .hero-building{height:430px}.home-page .hero-building img{width:100%;height:100%;object-fit:cover}.home-page .hero-building:after{background:linear-gradient(180deg,#071526 0%,rgba(7,21,38,0) 35%)}}
+@media(max-width:560px){.home-page .hero-card{min-height:700px;border-radius:22px}.home-page .hero-copy{padding:42px 27px 12px}.home-page .hero-copy h1{font-size:56px}.home-page .hero-copy .lead{font-size:12px}.home-page .hero-meta{flex-wrap:wrap;gap:12px}.home-page .hero-meta span{padding:0 12px}.home-page .buttons{flex-direction:column;align-items:flex-start}.home-page .hero-building{height:330px}}
