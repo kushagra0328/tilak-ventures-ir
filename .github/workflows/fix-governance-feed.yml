@@ -1,0 +1,42 @@
+name: Fix Corporate Governance Feed
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fix governance classification
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('functions/api/investor-feed.js')
+          s = p.read_text(encoding='utf-8')
+          old = "function classify(row,title){const category=String(pick(row,['CATEGORYNAME','CATEGORY_NAME','CategoryName'])).toLowerCase();const t=String(title||'').toLowerCase();if(/result|financial result/.test(category))return 'Financial Results';"
+          new = "function classify(row,title){const category=String(pick(row,['CATEGORYNAME','CATEGORY_NAME','CategoryName'])).toLowerCase();const t=String(title||'').toLowerCase();if(/corporate governance|integrated filing.*governance/.test(category))return 'Corporate Governance';if(/result|financial result/.test(category))return 'Financial Results';"
+          if old not in s:
+              raise SystemExit('Expected classification marker not found')
+          s = s.replace(old, new, 1)
+          old2 = "if(/integrated filing/.test(t))return 'Integrated Filings';if(/deviation|variation/.test(t))return 'Statement of Deviation or Variation';if(/corporate governance|governance report/.test(t))return 'Corporate Governance';"
+          new2 = "if(/corporate governance|integrated filing.*governance|reg\\.?27.*governance/.test(t))return 'Corporate Governance';if(/integrated filing/.test(t))return 'Integrated Filings';if(/deviation|variation/.test(t))return 'Statement of Deviation or Variation';if(/governance report/.test(t))return 'Corporate Governance';"
+          if old2 not in s:
+              raise SystemExit('Expected title classification marker not found')
+          s = s.replace(old2, new2, 1)
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit fix and remove one-time workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add functions/api/investor-feed.js
+          git rm .github/workflows/fix-governance-feed.yml
+          git commit -m "Fix BSE corporate governance classification"
+          git push
