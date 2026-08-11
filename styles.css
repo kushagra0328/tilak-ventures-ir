@@ -11,21 +11,21 @@ h1,h2,h3,h4{font-family:Inter,Arial,sans-serif;color:var(--ink);font-weight:700}
 @media(max-width:900px){.home-page{height:auto;min-height:100vh;overflow:auto}.home-page .home-hero{height:auto;min-height:calc(100vh - 110px);padding:55px 0 40px}.home-page .home-hero .hero-grid{height:auto;grid-template-columns:1fr;gap:28px}.home-page .hero-copy h1{font-size:54px}.home-page .hero-building{height:300px}.home-page nav{display:flex}}
 @media(max-width:520px){.home-page .hero-copy h1{font-size:47px}.home-page .hero-copy .lead{font-size:15px}.home-page .hero-building{height:240px}}
 
-/* Header readability refinement: consistent, larger navigation across every page */
+/* Header readability: one consistent 15px navigation scale on every page */
 .top .nav{min-height:82px;gap:32px}
 .top .brand{gap:12px}
 .top .brand .mark{width:42px;height:42px;font-size:12px}
 .top .brand b{font-size:14px;letter-spacing:.04em}
 .top .brand small{font-size:9px;letter-spacing:.17em;margin-top:5px}
-.top nav{gap:29px;font-size:20px;font-weight:500;color:#4b5864}
+.top nav{gap:29px;font-size:15px;font-weight:500;color:#4b5864}
 .top nav a{padding:30px 0}
 .top .cta{padding:13px 19px;font-size:13px}
 
-/* Tighter page start: reduce the visual gap between the enlarged navigation and page content. */
+/* Tighter page start: reduce the visual gap between navigation and page content. */
 .top + .page{padding-top:44px!important}
 .top + .documents-page{padding-top:42px!important}
 .top + .archive{padding-top:42px!important}
 .top + main{scroll-margin-top:0}
 
-@media(max-width:900px){.top .nav{min-height:78px;gap:22px}.top nav{gap:21px;font-size:16px}.top nav a{padding:28px 0}.top .brand b{font-size:13px}.top .brand small{font-size:8px}.top .brand .mark{width:40px;height:40px}.top .cta{font-size:12px;padding:12px 17px}}
-@media(max-width:520px){.top .nav{min-height:70px;gap:16px}.top .brand b{font-size:12px}.top .brand small{font-size:7px}.top .brand .mark{width:37px;height:37px}.top nav{gap:17px;font-size:14px}.top nav a{padding:24px 0}}
+@media(max-width:900px){.top .nav{min-height:78px;gap:22px}.top nav{gap:21px;font-size:15px}.top nav a{padding:28px 0}.top .brand b{font-size:13px}.top .brand small{font-size:8px}.top .brand .mark{width:40px;height:40px}.top .cta{font-size:12px;padding:12px 17px}}
+@media(max-width:520px){.top .nav{min-height:70px;gap:16px}.top .brand b{font-size:12px}.top .brand small{font-size:7px}.top .brand .mark{width:37px;height:37px}.top nav{gap:17px;font-size:15px}.top nav a{padding:24px 0}}
