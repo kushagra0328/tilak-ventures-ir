@@ -123,10 +123,7 @@ function resultRows(items) {
 }
 
 function annualYear(item) {
-  const text = String(item.title || '');
-  const fy = text.match(/(?:fy|financial year|year ended)[^0-9]{0,20}(20\d{2})[^0-9]{0,3}(?:-|\/|to)?[^0-9]{0,3}(\d{2,4})?/i);
-  if (fy) return Number(fy[1]) + 1 > 2100 ? Number(fy[1]) : Number(fy[1]) + 1;
-  const years = [...text.matchAll(/20\d{2}/g)].map(m => Number(m[0]));
+  const years = [...String(item.title || '').matchAll(/20\d{2}/g)].map(m => Number(m[0]));
   if (years.length) return Math.max(...years);
   const d = new Date(String(item.date || '').replace('T', ' '));
   return Number.isNaN(d.getTime()) ? 0 : d.getFullYear();
@@ -146,24 +143,8 @@ function annualRows(items) {
 
 async function fetchPage(page, from, to, category) {
   const isResults = category === 'Financial Results';
-  const params = new URLSearchParams({
-    pageno: String(page),
-    strCat: isResults ? 'Result' : '-1',
-    strPrevDate: from,
-    strScrip: '503663',
-    strSearch: 'P',
-    strToDate: to,
-    strType: 'C',
-    subcategory: isResults ? 'Financial Results' : ''
-  });
-  const response = await fetch(`${BSE_API}?${params.toString()}`, {
-    headers: {
-      Accept: 'application/json, text/plain, */*',
-      Referer: 'https://www.bseindia.com/corporates/ann.html',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/151 Safari/537.36'
-    },
-    cf: { cacheTtl: 300, cacheEverything: true }
-  });
+  const params = new URLSearchParams({ pageno: String(page), strCat: isResults ? 'Result' : '-1', strPrevDate: from, strScrip: '503663', strSearch: 'P', strToDate: to, strType: 'C', subcategory: isResults ? 'Financial Results' : '' });
+  const response = await fetch(`${BSE_API}?${params.toString()}`, { headers: { Accept: 'application/json, text/plain, */*', Referer: 'https://www.bseindia.com/corporates/ann.html', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/151 Safari/537.36' }, cf: { cacheTtl: 300, cacheEverything: true } });
   if (!response.ok) throw new Error(`BSE responded with ${response.status}`);
   return response.json();
 }
@@ -175,7 +156,7 @@ export async function onRequestGet({ request }) {
   const to = url.searchParams.get('to') || new Date().toISOString().slice(0, 10).replaceAll('-', '');
   const category = url.searchParams.get('category') || '';
   const query = (url.searchParams.get('q') || '').trim().toLowerCase();
-  const pageCount = category === 'Financial Results' || category === 'Annual Reports' ? 15 : 3;
+  const pageCount = category === 'Financial Results' ? 15 : category === 'Annual Reports' ? 40 : 3;
   try {
     const payloads = await Promise.all(Array.from({ length: pageCount }, (_, i) => fetchPage(i + 1, from, to, category)));
     const rows = payloads.flatMap(payload => Array.isArray(payload?.Table) ? payload.Table.map(normalise) : []);
@@ -186,17 +167,7 @@ export async function onRequestGet({ request }) {
     const annual = category === 'Annual Reports' ? annualRows(filtered) : [];
     const pageSize = 20;
     const items = category === 'Financial Results' ? results.slice((page - 1) * pageSize, page * pageSize) : category === 'Annual Reports' ? annual.slice((page - 1) * pageSize, page * pageSize) : filtered.slice((page - 1) * pageSize, page * pageSize);
-    return Response.json({
-      source: 'BSE Limited',
-      scripCode: '503663',
-      company: 'Tilak Ventures Limited',
-      page,
-      total: category === 'Financial Results' ? results.length : category === 'Annual Reports' ? annual.length : total,
-      items,
-      results: category === 'Financial Results' ? results : undefined,
-      annualReports: category === 'Annual Reports' ? annual : undefined,
-      fetchedAt: new Date().toISOString()
-    }, { headers: { 'Cache-Control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600' } });
+    return Response.json({ source: 'BSE Limited', scripCode: '503663', company: 'Tilak Ventures Limited', page, total: category === 'Financial Results' ? results.length : category === 'Annual Reports' ? annual.length : total, items, results: category === 'Financial Results' ? results : undefined, annualReports: category === 'Annual Reports' ? annual : undefined, fetchedAt: new Date().toISOString() }, { headers: { 'Cache-Control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600' } });
   } catch (error) {
     return Response.json({ source: 'BSE Limited', scripCode: '503663', company: 'Tilak Ventures Limited', error: 'BSE investor data is temporarily unavailable.', details: error instanceof Error ? error.message : String(error), items: [], results: [], annualReports: [] }, { status: 502, headers: { 'Cache-Control': 'no-store' } });
   }
