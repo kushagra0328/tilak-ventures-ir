@@ -25,9 +25,9 @@ function classify(title) {
   if (/sdd|structured digital database/.test(t)) return 'SDD Shareholding Pattern';
   if (/shareholding|share holders? pattern|specified securities/.test(t)) return 'Shareholding Pattern';
   if (/annual report|annual accounts/.test(t)) return 'Annual Reports';
-  if (/financial results|audited results|unaudited results|quarter ended|half year ended|standalone.*results|consolidated.*results/.test(t)) return 'Financial Results';
+  if (/financial results|audited results|unaudited results|financial result|quarter ended|half year ended|standalone.*results|consolidated.*results/.test(t)) return 'Financial Results';
   if (/board meeting|meeting of the board/.test(t)) return 'Board Meetings';
-  if (/annual general meeting|extraordinary general meeting|agm|egm|notice of meeting|scrutinizer|voting results/.test(t)) return 'Shareholders Meetings';
+  if (/annual general meeting|extraordinary general meeting|agm|egm|notice of meeting|scrutinizer|voting results|voting result|postal ballot/.test(t)) return 'Shareholders Meetings';
   if (/dividend|bonus|rights issue|buyback|split|sub-division|consolidation|record date|corporate action/.test(t)) return 'Corporate Actions';
   if (/investor complaint|investor grievance|complaints/.test(t)) return 'Investor Complaints';
   if (/bulk deal|block deal|bulk\/block/.test(t)) return 'Bulk / Block Deals';
@@ -42,16 +42,22 @@ function normalise(row) {
   const title = clean(pick(row, ['NEWSSUB', 'HEADLINE', 'NEWS_SUB', 'NEWS_DESC', 'SUBJECT'])) || 'BSE filing';
   const rawDate = pick(row, ['NEWS_DT', 'NEWS_DATE', 'DT_TM', 'DATE', 'News_submission_dt', 'DissemDT']);
   const attachment = pick(row, ['ATTACHMENTNAME', 'ATTACHMENT', 'ATTACHMENT_NAME']);
-  const id = pick(row, ['NEWSID', 'NEWS_ID', 'SLNO']) || `${title}-${rawDate}`;
+  const id = pick(row, ['NEWSID', 'NEWS_ID', 'SLNO', 'NewsID']) || `${title}-${rawDate}`;
   const bseLink = pick(row, ['NEWS_LINK', 'NEWSLINK', 'LINK', 'URL']);
   return {
     id: String(id),
     title,
     date: clean(rawDate) || '',
     category: classify(title),
-    status: clean(pick(row, ['STATUS', 'Status', 'FILING_STATUS'])) || (/revised|revision|corrected/i.test(title) ? 'Revised' : 'New'),
-    revisedDate: clean(pick(row, ['REVISED_DATE_TIME', 'REVISED_DT', 'REVISION_DATE'])) || '',
-    revisionReason: clean(pick(row, ['REVISION_REASON', 'REASON'])) || '',
+    status: clean(pick(row, ['STATUS', 'Status', 'FILING_STATUS', 'STATUS_DESC'])) || (/revised|revision|corrected/i.test(title) ? 'Revised' : 'New'),
+    revisedDate: clean(pick(row, ['REVISED_DATE_TIME', 'REVISED_DT', 'REVISION_DATE', 'REVISED_DT_TM'])) || '',
+    revisionReason: clean(pick(row, ['REVISION_REASON', 'REASON', 'REV_REASON'])) || '',
+    meetingDate: clean(pick(row, ['MEETING_DATE', 'MEETING_DT', 'MEETINGDATE'])) || '',
+    meetingType: clean(pick(row, ['MEETING_TYPE', 'MEETINGTYPE', 'TYPE'])) || '',
+    resolutionType: clean(pick(row, ['RESOLUTION_TYPE', 'RESOLUTIONTYPE'])) || '',
+    resolution: clean(pick(row, ['RESOLUTION', 'RESOLUTION_DESC', 'RESOLUTION_DESCRIPTION'])) || '',
+    quarter: clean(pick(row, ['QUARTER', 'Quarter'])) || '',
+    xbrl: clean(pick(row, ['XBRL', 'XBRL_LINK', 'XBRLLINK', 'XBRLURL'])) || '',
     pdf: attachmentUrl(attachment, rawDate),
     bse: /^https?:\/\//i.test(String(bseLink || '')) ? bseLink : 'https://www.bseindia.com/corporates/ann.html',
     source: 'BSE'
@@ -61,10 +67,10 @@ function normalise(row) {
 function resultQuarter(item) {
   const text = `${item.title || ''} ${item.date || ''}`.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
   const patterns = [
-    { q: 'Q1', month: 6, re: /(?:quarter|three months|3 months)[^\d]{0,120}(?:ended|ending)[^\d]{0,30}(?:30|29|28)[.\/-]0?6[.\/-](20\d{2})/i },
-    { q: 'Q2', month: 9, re: /(?:quarter|three months|6 months|half year)[^\d]{0,140}(?:ended|ending)[^\d]{0,30}(?:30|29)[.\/-]0?9[.\/-](20\d{2})/i },
-    { q: 'Q3', month: 12, re: /(?:quarter|three months|nine months)[^\d]{0,140}(?:ended|ending)[^\d]{0,30}(?:31|30)[.\/-]12[.\/-](20\d{2})/i },
-    { q: 'Q4', month: 3, re: /(?:quarter|three months|year)[^\d]{0,140}(?:ended|ending)[^\d]{0,30}(?:31|30)[.\/-]0?3[.\/-](20\d{2})/i },
+    { q: 'Q1', month: 6, re: /(?:quarter|three months|3 months)[^\d]{0,180}(?:ended|ending)[^\d]{0,40}(?:30|29|28)[.\/-]0?6[.\/-](20\d{2})/i },
+    { q: 'Q2', month: 9, re: /(?:quarter|three months|6 months|half year)[^\d]{0,200}(?:ended|ending)[^\d]{0,40}(?:30|29)[.\/-]0?9[.\/-](20\d{2})/i },
+    { q: 'Q3', month: 12, re: /(?:quarter|three months|nine months)[^\d]{0,200}(?:ended|ending)[^\d]{0,40}(?:31|30)[.\/-]12[.\/-](20\d{2})/i },
+    { q: 'Q4', month: 3, re: /(?:quarter|three months|year|financial year)[^\d]{0,220}(?:ended|ending)[^\d]{0,40}(?:31|30)[.\/-]0?3[.\/-](20\d{2})/i },
     { q: 'Q1', month: 6, re: /(?:june|jun)[\s,.-]*(?:30|29|28)(?:st|th|nd|rd)?[\s,.-]+(20\d{2})/i },
     { q: 'Q2', month: 9, re: /(?:september|sep)[\s,.-]*(?:30|29)(?:st|th|nd|rd)?[\s,.-]+(20\d{2})/i },
     { q: 'Q3', month: 12, re: /(?:december|dec)[\s,.-]*(?:31|30)(?:st|th|nd|rd)?[\s,.-]+(20\d{2})/i },
@@ -72,20 +78,15 @@ function resultQuarter(item) {
     { q: 'Q1', month: 6, re: /(?:30|29|28)(?:st|th|nd|rd)?[.\/-]0?6[.\/-](20\d{2})/i },
     { q: 'Q2', month: 9, re: /(?:30|29)(?:st|th|nd|rd)?[.\/-]0?9[.\/-](20\d{2})/i },
     { q: 'Q3', month: 12, re: /(?:31|30)(?:st|th|nd|rd)?[.\/-]12[.\/-](20\d{2})/i },
-    { q: 'Q4', month: 3, re: /(?:31|30)(?:st|th|nd|rd)?[.\/-]0?3[.\/-](20\d{2})/i }
+    { q: 'Q4', month: 3, re: /(?:31|30)(?:st|th|nd|rd)?[.\/-]0?3[.\/-](20\d{2})/i },
+    { q: 'Q1', month: 6, re: /\bjun(?:e)?[- ]?(20\d{2})\b/i },
+    { q: 'Q2', month: 9, re: /\bsep(?:t(?:ember)?)?[- ]?(20\d{2})\b/i },
+    { q: 'Q3', month: 12, re: /\bdec(?:ember)?[- ]?(20\d{2})\b/i },
+    { q: 'Q4', month: 3, re: /\bmar(?:ch)?[- ]?(20\d{2})\b/i }
   ];
   for (const p of patterns) {
     const match = text.match(p.re);
     if (match) return { quarter: p.q, endYear: Number(match[1]), endMonth: p.month };
-  }
-  const monthYear = text.match(/(?:june|jun|september|sep|december|dec|march|mar)[\s,.-]+(20\d{2})/i);
-  if (monthYear) {
-    const month = monthYear[0].toLowerCase();
-    const endYear = Number(monthYear[1]);
-    if (/jun/.test(month)) return { quarter: 'Q1', endYear, endMonth: 6 };
-    if (/sep/.test(month)) return { quarter: 'Q2', endYear, endMonth: 9 };
-    if (/dec/.test(month)) return { quarter: 'Q3', endYear, endMonth: 12 };
-    if (/mar/.test(month)) return { quarter: 'Q4', endYear, endMonth: 3 };
   }
   return null;
 }
@@ -105,7 +106,7 @@ function resultRows(items) {
     const current = groups.get(key);
     const currentTime = current ? new Date(String(current.date).replace('T', ' ')).getTime() : -Infinity;
     const itemTime = new Date(String(item.date).replace('T', ' ')).getTime();
-    if (!current || itemTime > currentTime) groups.set(key, { ...item, fiscalYear: fy, quarter: parsed.quarter });
+    if (!current || itemTime > currentTime) groups.set(key, { ...item, financialYear: fy, fiscalYear: fy, quarter: parsed.quarter });
   }
   const byYear = new Map();
   for (const item of groups.values()) {
@@ -119,9 +120,14 @@ function resultRows(items) {
     if (!row.h) row.h = row.q2;
     if (!row.y) row.y = row.q4;
   }
-  return [...byYear.values()].sort((a, b) => Number(b.financialYear.slice(0, 4)) - Number(a.financialYear.slice(0, 4)));
+  const now = new Date();
+  const currentFyStart = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+  const rows = [];
+  for (let start = currentFyStart; start >= 2017; start -= 1) {
+    rows.push(byYear.get(`${start}-${start + 1}`) || { financialYear: `${start}-${start + 1}`, q1: null, q2: null, q3: null, q4: null, h: null, y: null });
+  }
+  return rows;
 }
-
 function annualYear(item) {
   const years = [...String(item.title || '').matchAll(/20\d{2}/g)].map(m => Number(m[0]));
   if (years.length) return Math.max(...years);
@@ -140,7 +146,15 @@ function annualRows(items) {
   }
   return [...map.values()].sort((a, b) => b.year - a.year);
 }
-
+function votingRows(items) {
+  return items.filter(item => /voting result|voting results|disclosure of voting|postal ballot/i.test(item.title)).map(item => {
+    const meetingMatch = String(item.title).match(/(?:agm|annual general meeting|egm|extra-ordinary general meeting)[^\d]*(\d{1,2}(?:st|nd|rd|th)?[ .\/-]+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)[ .\/-]+20\d{2})/i);
+    const meetingDate = item.meetingDate || (meetingMatch ? meetingMatch[1] : '—');
+    const meetingType = item.meetingType || (/egm|extra-ordinary|extraordinary/i.test(item.title) ? 'EGM' : /postal ballot/i.test(item.title) ? 'Postal Ballot' : 'AGM');
+    const resolution = item.resolution || item.title.replace(/^.*?503663\s*-\s*/i, '').replace(/^.*?Voting Results?\s*(?:For|Of)\s*/i, '');
+    return { ...item, meetingDate, meetingType, resolutionType: item.resolutionType || '—', resolution, quarter: item.quarter || '', xbrl: item.xbrl || '' };
+  });
+}
 async function fetchPage(page, from, to, category) {
   const isResults = category === 'Financial Results';
   const params = new URLSearchParams({ pageno: String(page), strCat: isResults ? 'Result' : '-1', strPrevDate: from, strScrip: '503663', strSearch: 'P', strToDate: to, strType: 'C', subcategory: isResults ? 'Financial Results' : '' });
@@ -148,7 +162,6 @@ async function fetchPage(page, from, to, category) {
   if (!response.ok) throw new Error(`BSE responded with ${response.status}`);
   return response.json();
 }
-
 export async function onRequestGet({ request }) {
   const url = new URL(request.url);
   const page = Math.max(1, Number(url.searchParams.get('page') || 1));
@@ -156,19 +169,22 @@ export async function onRequestGet({ request }) {
   const to = url.searchParams.get('to') || new Date().toISOString().slice(0, 10).replaceAll('-', '');
   const category = url.searchParams.get('category') || '';
   const query = (url.searchParams.get('q') || '').trim().toLowerCase();
-  const pageCount = category === 'Financial Results' ? 15 : category === 'Annual Reports' ? 40 : 3;
+  const pageCount = category === 'Financial Results' ? 20 : category === 'Annual Reports' ? 40 : 8;
   try {
     const payloads = await Promise.all(Array.from({ length: pageCount }, (_, i) => fetchPage(i + 1, from, to, category)));
     const rows = payloads.flatMap(payload => Array.isArray(payload?.Table) ? payload.Table.map(normalise) : []);
     const unique = [...new Map(rows.map(item => [item.id, item])).values()];
-    const filtered = unique.filter(item => (!category || item.category === category) && (!query || item.title.toLowerCase().includes(query)));
+    const filtered = category === 'Financial Results'
+      ? unique.filter(item => (!query || item.title.toLowerCase().includes(query)))
+      : unique.filter(item => (!category || item.category === category) && (!query || item.title.toLowerCase().includes(query)));
     const total = Number(payloads[0]?.Table1?.[0]?.ROWCNT || payloads[0]?.Table1?.[0]?.RowCnt || filtered.length || 0);
     const results = category === 'Financial Results' ? resultRows(filtered) : [];
     const annual = category === 'Annual Reports' ? annualRows(filtered) : [];
+    const voting = category === 'Shareholders Meetings' && query === 'voting' ? votingRows(filtered) : [];
     const pageSize = 20;
-    const items = category === 'Financial Results' ? results.slice((page - 1) * pageSize, page * pageSize) : category === 'Annual Reports' ? annual.slice((page - 1) * pageSize, page * pageSize) : filtered.slice((page - 1) * pageSize, page * pageSize);
-    return Response.json({ source: 'BSE Limited', scripCode: '503663', company: 'Tilak Ventures Limited', page, total: category === 'Financial Results' ? results.length : category === 'Annual Reports' ? annual.length : total, items, results: category === 'Financial Results' ? results : undefined, annualReports: category === 'Annual Reports' ? annual : undefined, fetchedAt: new Date().toISOString() }, { headers: { 'Cache-Control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600' } });
+    const items = category === 'Financial Results' ? results.slice((page - 1) * pageSize, page * pageSize) : category === 'Annual Reports' ? annual.slice((page - 1) * pageSize, page * pageSize) : voting.length ? voting.slice((page - 1) * pageSize, page * pageSize) : filtered.slice((page - 1) * pageSize, page * pageSize);
+    return Response.json({ source: 'BSE Limited', scripCode: '503663', company: 'Tilak Ventures Limited', page, total: category === 'Financial Results' ? results.length : category === 'Annual Reports' ? annual.length : voting.length || total, items, results: category === 'Financial Results' ? results : undefined, annualReports: category === 'Annual Reports' ? annual : undefined, votingResults: voting.length ? voting : undefined, fetchedAt: new Date().toISOString() }, { headers: { 'Cache-Control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600' } });
   } catch (error) {
-    return Response.json({ source: 'BSE Limited', scripCode: '503663', company: 'Tilak Ventures Limited', error: 'BSE investor data is temporarily unavailable.', details: error instanceof Error ? error.message : String(error), items: [], results: [], annualReports: [] }, { status: 502, headers: { 'Cache-Control': 'no-store' } });
+    return Response.json({ source: 'BSE Limited', scripCode: '503663', company: 'Tilak Ventures Limited', error: 'BSE investor data is temporarily unavailable.', details: error instanceof Error ? error.message : String(error), items: [], results: [], annualReports: [], votingResults: [] }, { status: 502, headers: { 'Cache-Control': 'no-store' } });
   }
 }
