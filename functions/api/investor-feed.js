@@ -21,13 +21,19 @@ function attachmentUrl(name) {
 
 function classify(title) {
   const t = String(title || '').toLowerCase();
+  if (/sdd|structured digital database/.test(t)) return 'SDD Shareholding Pattern';
   if (/shareholding|share holders? pattern|specified securities/.test(t)) return 'Shareholding Pattern';
   if (/annual report|annual accounts/.test(t)) return 'Annual Reports';
   if (/financial results|audited results|unaudited results|quarter ended|half year ended|standalone.*results|consolidated.*results/.test(t)) return 'Financial Results';
   if (/board meeting|meeting of the board/.test(t)) return 'Board Meetings';
   if (/annual general meeting|extraordinary general meeting|agm|egm|notice of meeting|scrutinizer|voting results/.test(t)) return 'Shareholders Meetings';
   if (/dividend|bonus|rights issue|buyback|split|sub-division|consolidation|record date|corporate action/.test(t)) return 'Corporate Actions';
-  if (/integrated filing|deviation|variation|related party|brsr|business responsibility|secretarial compliance|ascr/.test(t)) return 'Integrated Filings';
+  if (/investor complaint|investor grievance|complaints/.test(t)) return 'Investor Complaints';
+  if (/bulk deal|block deal|bulk\/block/.test(t)) return 'Bulk / Block Deals';
+  if (/related party/.test(t)) return 'Related Party Transactions';
+  if (/brsr|business responsibility/.test(t)) return 'BRSR';
+  if (/annual secretarial compliance|ascr|secretarial compliance/.test(t)) return 'ASCR';
+  if (/integrated filing|deviation|variation/.test(t)) return 'Integrated Filings';
   if (/corporate governance|governance report/.test(t)) return 'Corporate Governance';
   return 'Corporate Announcements';
 }
@@ -38,14 +44,13 @@ function normalise(row) {
   const attachment = pick(row, ['ATTACHMENTNAME', 'ATTACHMENT', 'ATTACHMENT_NAME']);
   const id = pick(row, ['NEWSID', 'NEWS_ID', 'SLNO', 'SCRIP_CD']) || `${title}-${rawDate}`;
   const bseLink = pick(row, ['NEWS_LINK', 'NEWSLINK', 'LINK', 'URL']);
-  const direct = attachmentUrl(attachment);
   return {
     id: String(id),
     title,
     date: clean(rawDate) || '',
     category: classify(title),
-    pdf: direct,
-    bse: /^https?:\/\//i.test(String(bseLink || '')) ? bseLink : `https://www.bseindia.com/corporates/ann.html`,
+    pdf: attachmentUrl(attachment),
+    bse: /^https?:\/\//i.test(String(bseLink || '')) ? bseLink : 'https://www.bseindia.com/corporates/ann.html',
     source: 'BSE'
   };
 }
@@ -56,6 +61,7 @@ export async function onRequestGet({ request }) {
   const from = url.searchParams.get('from') || '20200101';
   const to = url.searchParams.get('to') || new Date().toISOString().slice(0, 10).replaceAll('-', '');
   const category = url.searchParams.get('category') || '';
+  const query = (url.searchParams.get('q') || '').trim().toLowerCase();
 
   const params = new URLSearchParams({
     pageno: String(page),
@@ -81,7 +87,11 @@ export async function onRequestGet({ request }) {
     if (!response.ok) throw new Error(`BSE responded with ${response.status}`);
     const payload = await response.json();
     const rows = Array.isArray(payload?.Table) ? payload.Table.map(normalise) : [];
-    const filtered = category ? rows.filter(item => item.category === category) : rows;
+    const filtered = rows.filter(item => {
+      const categoryMatch = !category || item.category === category;
+      const queryMatch = !query || item.title.toLowerCase().includes(query);
+      return categoryMatch && queryMatch;
+    });
     const total = Number(payload?.Table1?.[0]?.ROWCNT || payload?.Table1?.[0]?.RowCnt || rows.length || 0);
 
     return Response.json({
@@ -92,11 +102,7 @@ export async function onRequestGet({ request }) {
       total,
       items: filtered,
       fetchedAt: new Date().toISOString()
-    }, {
-      headers: {
-        'Cache-Control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600'
-      }
-    });
+    }, { headers: { 'Cache-Control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600' } });
   } catch (error) {
     return Response.json({
       source: 'BSE Limited',
