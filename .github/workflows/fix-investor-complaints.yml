@@ -1,0 +1,67 @@
+name: Fix Investor Complaints BSE Layout
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-investor-complaints.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Investor Complaints renderer
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('investors.html')
+          s = p.read_text(encoding='utf-8')
+          if 'id="complaintsView"' in s:
+              print('Investor Complaints patch already present')
+              raise SystemExit(0)
+
+          old = '<div id="relatedPartyView" class="results-wrap" hidden></div>'
+          new = old + '\n<div id="complaintsView" class="results-wrap" hidden></div>'
+          assert old in s, 'relatedPartyView anchor not found'
+          s = s.replace(old, new, 1)
+
+          old = 'shareholdingView=document.getElementById(\'shareholdingView\'),governanceView=document.getElementById(\'governanceView\'),relatedPartyView=document.getElementById(\'relatedPartyView\'),list=document.getElementById(\'feedList\')'
+          new = 'shareholdingView=document.getElementById(\'shareholdingView\'),governanceView=document.getElementById(\'governanceView\'),relatedPartyView=document.getElementById(\'relatedPartyView\'),complaintsView=document.getElementById(\'complaintsView\'),list=document.getElementById(\'feedList\')'
+          assert old in s, 'DOM declaration anchor not found'
+          s = s.replace(old, new, 1)
+
+          marker = 'function renderList(items){'
+          assert marker in s, 'renderList marker not found'
+          complaint_fn = r'''function complaintQuarter(item){const raw=String(item?.quarter||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();const title=String(item?.title||'');const source=`${raw} ${title}`;const m=source.match(/\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[\s,.-]+(20\d{2})\b/i);if(m){const map={jan:'Jan',january:'Jan',feb:'Feb',february:'Feb',mar:'Mar',march:'Mar',apr:'Apr',april:'Apr',may:'May',jun:'Jun',june:'Jun',jul:'Jul',july:'Jul',aug:'Aug',august:'Aug',sep:'Sep',sept:'Sep',september:'Sep',oct:'Oct',october:'Oct',nov:'Nov',november:'Nov',dec:'Dec',december:'Dec'};return `${map[m[1].toLowerCase()]||m[1]} ${m[2]}`;}return raw||'—';}
+function complaintYear(q,item){const m=String(q).match(/^(Jan|Feb|Mar)\s+(20\d{2})$/i);if(m)return `${Number(m[2])-1} - ${m[2]}`;const y=String(q).match(/20\d{2}/);if(y){const n=Number(y[0]);return `${n} - ${n+1}`;}const d=parseDate(item?.date);if(d){const n=d.getMonth()<3?d.getFullYear()-1:d.getFullYear();return `${n} - ${n+1}`;}return '—';}
+function renderComplaints(items){if(!items?.length){complaintsView.innerHTML='<div class="feed-empty">No investor-complaint filings were returned by BSE.</div>';return;}const rows=[...items].sort((a,b)=>(parseDate(b.date)?.getTime()||0)-(parseDate(a.date)?.getTime()||0));complaintsView.innerHTML=`<div class="governance-note">To view Integrated Filing (Governance) from March 2025 quarter, please <a href="https://www.bseindia.com/stock-share-price/tilak-ventures-ltd/tilakventures/503663/corp-gov/" target="_blank" rel="noopener noreferrer">click here</a>.</div><div class="results-wrap"><table class="governance-table"><thead><tr><th>Year</th><th>Quarter</th><th>Status</th><th>Filing Date Time</th><th>Revised Filing Date Time</th><th>Revision Reason</th><th>XBRL Link</th></tr></thead><tbody>${rows.map(item=>{const q=complaintQuarter(item);const x=votingXbrl(item);const quarterCell=item?.pdf?`<a class="governance-quarter-link" href="${esc(safeUrl(item.pdf))}" target="_blank" rel="noopener noreferrer">${esc(q)}</a>`:esc(q);const xbrl=x&&x!=='#'?`<a class="xbrl-link" href="${esc(safeUrl(x))}" target="_blank" rel="noopener noreferrer">XBRL</a>`:'<span class="result-empty">—</span>';return `<tr><td>${esc(complaintYear(q,item))}</td><td>${quarterCell}</td><td>${esc(item.status||'New')}</td><td>${formatDate(item.date)}</td><td>${formatDate(item.revisedDate)}</td><td>${esc(item.revisionReason||'—')}</td><td>${xbrl}</td></tr>`;}).join('')}</tbody></table></div><div class="governance-foot">Statement of Investor Complaints filings are retrieved dynamically from BSE for scrip 503663 and presented in the BSE filing-table format. XBRL opens the corresponding BSE filing where BSE supplies the filing identifier.</div>`;}
+'''
+          s = s.replace(marker, complaint_fn + marker, 1)
+
+          old = "const isResults=state.category==='Financial Results',isAnnual=state.category==='Annual Reports',isVoting=state.category==='Shareholders Meetings'&&state.query==='voting',isShareholding=state.category==='Shareholding Pattern',isGovernance=state.category==='Corporate Governance',isRelatedParty=state.category==='Related Party Transactions';"
+          new = old[:-1] + ",isComplaints=state.category==='Investor Complaints';"
+          assert old in s, 'load flags anchor not found'
+          s = s.replace(old, new, 1)
+
+          s = s.replace("relatedPartyView.hidden=!isRelatedParty;list.hidden=isResults||isAnnual||isVoting||isShareholding||isGovernance||isRelatedParty;controls.hidden=isResults||isAnnual||isVoting||isShareholding||isGovernance||isRelatedParty;title.textContent=isResults?'Results':isAnnual?'Annual Reports':isVoting?'Voting Results':isShareholding?'Shareholding Pattern':isGovernance?'Corporate Governance':isRelatedParty?'Related Party Transactions':(buttons.find(b=>b.classList.contains('active'))?.textContent.trim()||'Investor Filings');", "relatedPartyView.hidden=!isRelatedParty;complaintsView.hidden=!isComplaints;list.hidden=isResults||isAnnual||isVoting||isShareholding||isGovernance||isRelatedParty||isComplaints;controls.hidden=isResults||isAnnual||isVoting||isShareholding||isGovernance||isRelatedParty||isComplaints;title.textContent=isResults?'Results':isAnnual?'Annual Reports':isVoting?'Voting Results':isShareholding?'Shareholding Pattern':isGovernance?'Corporate Governance':isRelatedParty?'Related Party Transactions':isComplaints?'Statement of Investor Complaints':(buttons.find(b=>b.classList.contains('active'))?.textContent.trim()||'Investor Filings');", 1)
+          s = s.replace("if(isRelatedParty)relatedPartyView.innerHTML='<div class=\"feed-empty\">Loading BSE related-party transaction filings…</div>';", "if(isRelatedParty)relatedPartyView.innerHTML='<div class=\"feed-empty\">Loading BSE related-party transaction filings…</div>';if(isComplaints)complaintsView.innerHTML='<div class=\"feed-empty\">Loading BSE investor complaints…</div>';", 1)
+          s = s.replace("if(isRelatedParty)renderRelatedParty(data.items||[]);else renderList(data.items||[]);", "if(isRelatedParty)renderRelatedParty(data.items||[]);else if(isComplaints)renderComplaints(data.items||[]);else renderList(data.items||[]);", 1)
+          s = s.replace("else if(isRelatedParty)relatedPartyView.innerHTML=message;else list.innerHTML=message;", "else if(isRelatedParty)relatedPartyView.innerHTML=message;else if(isComplaints)complaintsView.innerHTML=message;else list.innerHTML=message;", 1)
+
+          p.write_text(s, encoding='utf-8')
+          print('Investor Complaints BSE renderer patched')
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add investors.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Fix investor complaints BSE table renderer'
+          git push
