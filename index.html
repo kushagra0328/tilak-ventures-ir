@@ -3,33 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tilak Ventures Limited | Corporate & Investor Relations</title>
+<title>Tilak Ventures Limited | Corporate and Investor Relations</title>
 <meta name="description" content="Tilak Ventures Limited — financing, equity investments and commodity trading, with corporate information, investor disclosures and governance resources.">
-<link rel="stylesheet" href="styles.css?v=20260812-hero3">
-<link rel="stylesheet" href="home.css?v=20260812-hero3">
-<link rel="stylesheet" href="hero-fix.css?v=20260812-hero3">
-<link rel="preload" href="hero-globe.svg?v=20260812-hero3" as="image" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css?v=20260812-hero4">
+<link rel="stylesheet" href="home.css?v=20260812-hero4">
+<link rel="stylesheet" href="hero-fix.css?v=20260812-hero4">
+<link rel="preload" href="hero-globe.svg?v=20260812-hero4" as="image" type="image/svg+xml">
 </head>
 <body class="home-page">
 <header class="top">
   <div class="wrap nav">
     <a class="brand" href="index.html" aria-label="Tilak Ventures Limited home"><span class="mark">TV</span><span><b>TILAK VENTURES</b><small>LIMITED</small></span></a>
     <nav aria-label="Primary navigation">
-      <a href="company.html">Company</a><a href="disclosures.html">Investors</a><a href="governance.html">Governance</a><a href="disclosures.html">Documents</a><a href="mailto:tilakfin@gmail.com">Contact</a>
+      <a class="active" href="index.html">Home</a>
+      <a href="company.html">Company</a>
+      <a href="investors.html">Investors</a>
+      <a href="governance.html">Governance</a>
+      <a href="documents.html">Documents</a>
+      <a href="mailto:tilakfin@gmail.com">Contact</a>
     </nav>
-    <div class="nav-actions">
-      <div class="nav-dropdown">
-        <button class="menu-trigger" type="button" aria-haspopup="true" aria-expanded="false">Menu <span>⌄</span></button>
-        <div class="menu-dropdown" role="menu">
-          <a href="company.html" role="menuitem"><b>Company</b><small>About Tilak Ventures</small></a>
-          <a href="disclosures.html" role="menuitem"><b>Investors</b><small>Financial results & filings</small></a>
-          <a href="governance.html" role="menuitem"><b>Governance</b><small>Policies & governance</small></a>
-          <a href="disclosures.html" role="menuitem"><b>Documents</b><small>Disclosure archive</small></a>
-          <a href="mailto:tilakfin@gmail.com" role="menuitem"><b>Contact</b><small>Corporate enquiries</small></a>
-        </div>
-      </div>
-      <a class="cta" href="disclosures.html">Investor Centre <span>→</span></a>
-    </div>
+    <a class="cta" href="investor-centre.html">Investor Centre <span>→</span></a>
   </div>
 </header>
 <main>
@@ -46,19 +39,14 @@
             <span><b>ISIN</b>INE026L01022</span>
             <span><b>LISTED ON</b>BSE</span>
           </div>
-          <div class="buttons"><a class="btn gold" href="company.html">About the Company <span>→</span></a><a class="btn outline" href="disclosures.html">Investor Centre <span>→</span></a></div>
+          <div class="buttons"><a class="btn gold" href="company.html">About the Company <span>→</span></a><a class="btn outline" href="investor-centre.html">Investor Centre <span>→</span></a></div>
         </div>
         <div class="hero-building" aria-label="Financial globe held in hand">
-          <img src="hero-globe.svg?v=20260812-hero3" alt="Financial globe held in a hand" decoding="async">
+          <img src="hero-globe.svg?v=20260812-hero4" alt="Financial globe held in a hand" decoding="async">
         </div>
       </div>
     </div>
   </section>
 </main>
-<script>
-const dropdown=document.querySelector('.nav-dropdown'),trigger=document.querySelector('.menu-trigger');
-trigger.addEventListener('click',e=>{e.stopPropagation();dropdown.classList.toggle('open');trigger.setAttribute('aria-expanded',dropdown.classList.contains('open'))});
-document.addEventListener('click',()=>{dropdown.classList.remove('open');trigger.setAttribute('aria-expanded','false')});
-</script>
 </body>
 </html>
