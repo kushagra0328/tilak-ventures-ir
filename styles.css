@@ -29,3 +29,12 @@ h1,h2,h3,h4{font-family:Inter,Arial,sans-serif;color:var(--ink);font-weight:700}
 
 @media(max-width:900px){.top .nav{min-height:78px;gap:22px}.top nav{gap:21px;font-size:15px}.top nav a{padding:28px 0}.top .brand b{font-size:13px}.top .brand small{font-size:8px}.top .brand .mark{width:40px;height:40px}.top .cta{font-size:12px;padding:12px 17px}}
 @media(max-width:520px){.top .nav{min-height:70px;gap:16px}.top .brand b{font-size:12px}.top .brand small{font-size:7px}.top .brand .mark{width:37px;height:37px}.top nav{gap:17px;font-size:15px}.top nav a{padding:24px 0}}
+
+/* Final primary navigation: Home · About Us · Governance · Contact Us · Investor Centre */
+.top nav a:nth-child(2){font-size:0}
+.top nav a:nth-child(2)::after{content:'About Us';font-size:15px}
+.top nav a:nth-child(3),.top nav a:nth-child(5){display:none!important}
+.top nav a:nth-child(6)::after{content:'Contact Us';font-size:15px}
+.top nav a:nth-child(6){font-size:0}
+.top .cta{font-size:13px}
+@media(max-width:900px){.top nav a:nth-child(2)::after,.top nav a:nth-child(6)::after{font-size:15px}}
