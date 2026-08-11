@@ -1,24 +1,25 @@
 const BSE_API = 'https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w';
-const BSE_ATTACH = 'https://www.bseindia.com/xml-data/corpfiling/AttachLive/';
+const BSE_LIVE_ATTACH = 'https://www.bseindia.com/xml-data/corpfiling/AttachLive/';
+const BSE_HISTORY_ATTACH = 'https://www.bseindia.com/xml-data/corpfiling/AttachHis/';
 
 function clean(value) {
   return typeof value === 'string' ? value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : value;
 }
-
 function pick(row, keys) {
   for (const key of keys) {
     if (row && row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== '') return row[key];
   }
   return '';
 }
-
-function attachmentUrl(name) {
+function attachmentUrl(name, dateValue) {
   if (!name) return null;
   const value = String(name).trim();
   if (/^https?:\/\//i.test(value)) return value;
-  return `${BSE_ATTACH}${value.replace(/^\/+/, '')}`;
+  const parsed = new Date(String(dateValue || '').replace('T', ' '));
+  const isHistorical = !Number.isNaN(parsed.getTime()) && parsed.getTime() < Date.now() - 24 * 60 * 60 * 1000;
+  const base = isHistorical ? BSE_HISTORY_ATTACH : BSE_LIVE_ATTACH;
+  return `${base}${value.replace(/^\/+/, '')}`;
 }
-
 function classify(title) {
   const t = String(title || '').toLowerCase();
   if (/sdd|structured digital database/.test(t)) return 'SDD Shareholding Pattern';
@@ -37,10 +38,9 @@ function classify(title) {
   if (/corporate governance|governance report/.test(t)) return 'Corporate Governance';
   return 'Corporate Announcements';
 }
-
 function normalise(row) {
   const title = clean(pick(row, ['NEWSSUB', 'HEADLINE', 'NEWS_SUB', 'NEWS_DESC', 'SUBJECT'])) || 'BSE filing';
-  const rawDate = pick(row, ['NEWS_DT', 'NEWS_DATE', 'DT_TM', 'DATE']);
+  const rawDate = pick(row, ['NEWS_DT', 'NEWS_DATE', 'DT_TM', 'DATE', 'News_submission_dt']);
   const attachment = pick(row, ['ATTACHMENTNAME', 'ATTACHMENT', 'ATTACHMENT_NAME']);
   const id = pick(row, ['NEWSID', 'NEWS_ID', 'SLNO', 'SCRIP_CD']) || `${title}-${rawDate}`;
   const bseLink = pick(row, ['NEWS_LINK', 'NEWSLINK', 'LINK', 'URL']);
@@ -49,12 +49,11 @@ function normalise(row) {
     title,
     date: clean(rawDate) || '',
     category: classify(title),
-    pdf: attachmentUrl(attachment),
+    pdf: attachmentUrl(attachment, rawDate),
     bse: /^https?:\/\//i.test(String(bseLink || '')) ? bseLink : 'https://www.bseindia.com/corporates/ann.html',
     source: 'BSE'
   };
 }
-
 export async function onRequestGet({ request }) {
   const url = new URL(request.url);
   const page = Math.max(1, Number(url.searchParams.get('page') || 1));
@@ -62,55 +61,16 @@ export async function onRequestGet({ request }) {
   const to = url.searchParams.get('to') || new Date().toISOString().slice(0, 10).replaceAll('-', '');
   const category = url.searchParams.get('category') || '';
   const query = (url.searchParams.get('q') || '').trim().toLowerCase();
-
-  const params = new URLSearchParams({
-    pageno: String(page),
-    strCat: '-1',
-    strPrevDate: from,
-    strScrip: '503663',
-    strSearch: 'P',
-    strToDate: to,
-    strType: 'C',
-    subcategory: ''
-  });
-
+  const params = new URLSearchParams({pageno:String(page),strCat:'-1',strPrevDate:from,strScrip:'503663',strSearch:'P',strToDate:to,strType:'C',subcategory:''});
   try {
-    const response = await fetch(`${BSE_API}?${params.toString()}`, {
-      headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Referer': 'https://www.bseindia.com/corporates/ann.html',
-        'User-Agent': 'Mozilla/5.0 (compatible; TilakVenturesInvestorRelations/1.0)'
-      },
-      cf: { cacheTtl: 300, cacheEverything: true }
-    });
-
+    const response = await fetch(`${BSE_API}?${params.toString()}`, {headers:{'Accept':'application/json, text/plain, */*','Referer':'https://www.bseindia.com/corporates/ann.html','User-Agent':'Mozilla/5.0 (compatible; TilakVenturesInvestorRelations/1.0)'},cf:{cacheTtl:300,cacheEverything:true}});
     if (!response.ok) throw new Error(`BSE responded with ${response.status}`);
     const payload = await response.json();
     const rows = Array.isArray(payload?.Table) ? payload.Table.map(normalise) : [];
-    const filtered = rows.filter(item => {
-      const categoryMatch = !category || item.category === category;
-      const queryMatch = !query || item.title.toLowerCase().includes(query);
-      return categoryMatch && queryMatch;
-    });
+    const filtered = rows.filter(item => (!category || item.category === category) && (!query || item.title.toLowerCase().includes(query)));
     const total = Number(payload?.Table1?.[0]?.ROWCNT || payload?.Table1?.[0]?.RowCnt || rows.length || 0);
-
-    return Response.json({
-      source: 'BSE Limited',
-      scripCode: '503663',
-      company: 'Tilak Ventures Limited',
-      page,
-      total,
-      items: filtered,
-      fetchedAt: new Date().toISOString()
-    }, { headers: { 'Cache-Control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600' } });
+    return Response.json({source:'BSE Limited',scripCode:'503663',company:'Tilak Ventures Limited',page,total,items:filtered,fetchedAt:new Date().toISOString()},{headers:{'Cache-Control':'public, max-age=120, s-maxage=300, stale-while-revalidate=600'}});
   } catch (error) {
-    return Response.json({
-      source: 'BSE Limited',
-      scripCode: '503663',
-      company: 'Tilak Ventures Limited',
-      error: 'BSE investor data is temporarily unavailable.',
-      details: error instanceof Error ? error.message : String(error),
-      items: []
-    }, { status: 502, headers: { 'Cache-Control': 'no-store' } });
+    return Response.json({source:'BSE Limited',scripCode:'503663',company:'Tilak Ventures Limited',error:'BSE investor data is temporarily unavailable.',details:error instanceof Error ? error.message : String(error),items:[]},{status:502,headers:{'Cache-Control':'no-store'}});
   }
 }
