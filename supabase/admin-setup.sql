@@ -4,7 +4,7 @@
 insert into public.admin_profiles (user_id, full_name, role, active)
 select id, 'Company Administrator', 'admin', true
 from auth.users
-where email = 'REPLACE_WITH_ADMIN_EMAIL'
+where email = 'tilakfin@gmail.com'
 on conflict (user_id) do update
 set role = 'admin', active = true;
 
