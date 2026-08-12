@@ -159,8 +159,13 @@ if INVESTORS_HTML.exists():
     old = "if((label.startsWith('Jun-')&&yy>=18&&yy<=25)||(label.startsWith('Sep-')&&(yy===17||(yy>=19&&yy<=25)))||(label.startsWith('Dec-')&&yy>=17&&yy<=25)||(label.startsWith('Mar-')&&yy>=18&&yy<=26))"
     new = "if((label.startsWith('Jun-')&&yy>=13&&yy<=25)||(label.startsWith('Sep-')&&yy>=13&&yy<=25)||(label.startsWith('Dec-')&&yy>=13&&yy<=25)||(label.startsWith('Mar-')&&yy>=13&&yy<=26))"
     if old in html:
-        INVESTORS_HTML.write_text(html.replace(old, new), encoding='utf-8')
-        print('Enabled historical result links through FY 2013-14')
+        html = html.replace(old, new)
+    old_rows = 'for(let fy=startFY;fy>=2017;fy--)'
+    new_rows = 'for(let fy=startFY;fy>=2013;fy--)'
+    if old_rows in html:
+        html = html.replace(old_rows, new_rows)
+        print('Enabled historical Results rows through FY 2013-14')
+    INVESTORS_HTML.write_text(html, encoding='utf-8')
 
 if pending:
     print('Pending exact result PDFs:', ', '.join(pending))
