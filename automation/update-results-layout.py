@@ -9,7 +9,6 @@ import requests
 ROOT = Path('.')
 MANIFEST_PATH = ROOT / 'investor-results-manifest.json'
 RESULTS_DIR = ROOT / 'results'
-INVESTORS = ROOT / 'investors.html'
 MANUAL_JSON = ROOT / 'investor-manual-results.json'
 
 manifest = json.loads(MANIFEST_PATH.read_text(encoding='utf-8'))
@@ -143,34 +142,18 @@ available = [
     for name in targets
     if (RESULTS_DIR / name).exists()
 ]
+pending = [name for name, digest in targets.items() if digest not in found]
+
 MANUAL_JSON.write_text(
     json.dumps({
         'policy': 'Static Company Archive. Historical result PDFs are stored locally in /results and are independent of BSE and WordPress.',
         'results': available,
-        'pending_exact_matches': [name for name, digest in targets.items() if digest not in found],
+        'pending_exact_matches': pending,
     }, indent=2) + '\n',
     encoding='utf-8',
 )
 
-new_renderer = r'''function renderResults(rows){
-const periods=[{financialYear:'2026-2027',q1:null,q2:null,q3:null,q4:null,current:true}];
-for(let fy=2025;fy>=2017;fy--){const next=fy+1;periods.push({financialYear:`${fy}-${String(next).slice(-2)}`,q1:`Jun-${String(fy).slice(-2)}`,q2:`Sep-${String(fy).slice(-2)}`,q3:`Dec-${String(fy).slice(-2)}`,q4:`Mar-${String(next).slice(-2)}`});}
-const archive=l=>`<a class="result-link result-placeholder" href="${esc(`results/${l}.pdf`)}" target="_blank" rel="noopener noreferrer">${esc(l)}</a>`;
-const cell=(l,c)=>c?'<span class="result-empty">Not filed</span>':archive(l);
-resultsView.innerHTML=`<table class="results-table"><thead><tr><th>Financial Year</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr></thead><tbody>${periods.map(r=>`<tr><td>${esc(r.financialYear)}</td><td>${cell(r.q1,r.current)}</td><td>${cell(r.q2,r.current)}</td><td>${cell(r.q3,r.current)}</td><td>${cell(r.q4,r.current)}</td></tr>`).join('')}</tbody></table><div class="results-foot">Historical financial results are maintained in the Company's independent archive. Result PDFs are served locally and are not dependent on BSE or WordPress.</div>`;
-}'''
-
-html = INVESTORS.read_text(encoding='utf-8')
-a = html.find('function renderResults(rows){')
-b = html.find('function pdfIcon', a)
-if a < 0 or b < 0:
-    raise SystemExit('Could not locate Results renderer')
-html = html[:a] + new_renderer + html[b:]
-old = 'if(isResults)resultsView.innerHTML=\'<div class="feed-empty">Loading exchange financial results…</div>\';'
-new = "if(isResults){status.innerHTML='Source: <strong>Company Archive</strong> · Historical Results';renderResults([]);return;}"
-if old not in html:
-    raise SystemExit('Could not locate Results load hook')
-html = html.replace(old, new, 1)
-if 'id="results-archive-layout"' not in html:
-    html = html.replace('</head>', '<style id="results-archive-layout">.result-link.result-placeholder::before{display:none!important}.result-link.result-placeholder{font-size:13px;font-weight:600;color:#0969e8;text-decoration:none;cursor:pointer}.result-link.result-placeholder:hover{text-decoration:underline}.results-table th,.results-table td{min-width:110px}.results-table th:first-child,.results-table td:first-child{min-width:150px}</style></head>', 1)
-INVESTORS.write_text(html, encoding='utf-8')
+if pending:
+    print('Pending exact result PDFs:', ', '.join(pending))
+else:
+    print('All supplied historical result PDFs are archived locally.')
