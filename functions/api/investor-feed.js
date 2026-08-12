@@ -43,12 +43,20 @@ function classify(row,title){
 function normalise(row){
   const title=clean(pick(row,['NEWSSUB','HEADLINE','NEWS_SUB','NEWS_DESC','SUBJECT']))||'BSE filing';
   const rawDate=pick(row,['NEWS_DT','NEWS_DATE','DT_TM','DATE','News_submission_dt','DissemDT']);
-  const attachment=pick(row,['ATTACHMENTNAME','ATTACHMENT','ATTACHMENT_NAME']);
+  const attachment=pick(row,['ATTACHMENTNAME','ATTACHMENT','ATTACHMENT_NAME','PDF_ATTACHMENT','PDFATTACHMENT','PDF_NAME']);
   const newsId=pick(row,['NEWSID','NEWS_ID','NewsID']);
   const scrip=pick(row,['SCRIP_CD','SCRIPCODE','SCRIP_CODE'])||BSE_SCRIP_CODE;
   const bseLink=pick(row,['NSURL','NEWS_LINK','NEWSLINK','LINK','URL']);
   const status=clean(pick(row,['FILESTATUS','STATUS','Status','FILING_STATUS','STATUS_DESC']))||(/revised|revision|corrected/i.test(title)?'Revised':'New');
-  return {id:String(newsId||pick(row,['SLNO'])||`${title}-${rawDate}`),newsId:String(newsId||''),scripCode:String(scrip),title,date:clean(rawDate)||'',category:classify(row,title),status:/r|revis/i.test(status)?'Revised':'New',revisedDate:clean(pick(row,['REVISED_DATE_TIME','REVISED_DT','REVISION_DATE','REVISED_DT_TM']))||'',revisionReason:clean(pick(row,['REVISION_REASON','REASON','REV_REASON']))||'',meetingDate:clean(pick(row,['MEETING_DATE','MEETING_DT','MEETINGDATE']))||'',meetingType:clean(pick(row,['MEETING_TYPE','MEETINGTYPE','TYPE']))||'',resolutionType:clean(pick(row,['RESOLUTION_TYPE','RESOLUTIONTYPE']))||'',resolution:clean(pick(row,['RESOLUTION','RESOLUTION_DESC','RESOLUTION_DESCRIPTION']))||'',quarter:clean(pick(row,['QUARTER','Quarter']))||'',pdf:attachmentUrl(attachment,rawDate),xbrl:xbrlUrl(newsId,scrip),bse:/^https?:\/\//i.test(String(bseLink||''))?bseLink:'https://www.bseindia.com/corporates/ann.html',source:'BSE'};
+  const xbrlAttachment=pick(row,['XBRL_ATTACHMENT','XBRLATTACHMENT','XBRL_FILE','XBRLFILE','XBRL_NAME','XBRLNAME']);
+  const xbrlDirect=pick(row,['XBRL_LINK','XBRL_LINK_URL','XBRLLINK','XBRL_URL','XBRLURL']);
+  const xbrlDate=clean(pick(row,['XBRL_DATE_TIME','XBRL_DATE','XBRL_DT','XBRL_DT_TM','FILING_DATE_TIME_XBRL','FILINGDATETIME_XBRL','XBRL_FILING_DATE']))||clean(rawDate)||'';
+  const xbrlRevisedDate=clean(pick(row,['XBRL_REVISED_DATE_TIME','XBRL_REVISED_DATE','XBRL_REVISED_DT','REVISED_FILING_DATE_TIME_XBRL','REVISED_DATE_TIME_XBRL']))||'';
+  const pdfDate=clean(pick(row,['PDF_DATE_TIME','PDF_DATE','PDF_DT','FILING_DATE_TIME_PDF','FILINGDATETIME_PDF','PDF_FILING_DATE']))||clean(rawDate)||'';
+  const pdfRevisedDate=clean(pick(row,['PDF_REVISED_DATE_TIME','PDF_REVISED_DATE','PDF_REVISED_DT','REVISED_FILING_DATE_TIME_PDF','REVISED_DATE_TIME_PDF']))||'';
+  const revisionReason=clean(pick(row,['REVISION_REASON','REASON','REV_REASON','XBRL_REVISION_REASON','PDF_REVISION_REASON']))||'';
+  const xbrl=xbrlDirect||attachmentUrl(xbrlAttachment,xbrlDate)||xbrlUrl(newsId,scrip);
+  return {id:String(newsId||pick(row,['SLNO'])||`${title}-${rawDate}`),newsId:String(newsId||''),scripCode:String(scrip),title,date:clean(rawDate)||'',category:classify(row,title),status:/r|revis/i.test(status)?'Revised':'New',revisedDate:clean(pick(row,['REVISED_DATE_TIME','REVISED_DT','REVISION_DATE','REVISED_DT_TM']))||'',revisionReason,meetingDate:clean(pick(row,['MEETING_DATE','MEETING_DT','MEETINGDATE']))||'',meetingType:clean(pick(row,['MEETING_TYPE','MEETINGTYPE','TYPE']))||'',resolutionType:clean(pick(row,['RESOLUTION_TYPE','RESOLUTIONTYPE']))||'',resolution:clean(pick(row,['RESOLUTION','RESOLUTION_DESC','RESOLUTION_DESCRIPTION']))||'',quarter:clean(pick(row,['QUARTER','Quarter']))||'',pdf:attachmentUrl(attachment,pdfDate),xbrl,xbrlDate,xbrlRevisedDate,pdfDate,pdfRevisedDate,xbrlAttachment,pdfAttachment:attachment,bse:/^https?:\/\//i.test(String(bseLink||''))?bseLink:'https://www.bseindia.com/corporates/ann.html',source:'BSE'};
 }
 
 function periodFromText(value){
@@ -92,12 +100,32 @@ function governanceItem(item){
 }
 function relatedPartyItem(item){const text=`${item.category||''} ${item.title||''}`.toLowerCase();return item.category==='Related Party Transactions'||/related party|related-party|integrated filing\s*[-–—(]?\s*finance/.test(text);}
 function complaintItem(item){const text=`${item.category||''} ${item.title||''}`.toLowerCase();return item.category==='Investor Complaints'||/investor complaint|investor grievance|statement of investor complaints|complaints for the quarter/.test(text);}
+function ascrItem(item){const text=`${item.category||''} ${item.title||''}`.toLowerCase();return item.category==='ASCR'||/annual secretarial compliance|secretarial compliance report|\bascr\b/.test(text);}
 function categoryMatch(item,category){
   if(!category)return true;
   if(category==='Corporate Governance')return governanceItem(item);
   if(category==='Related Party Transactions')return relatedPartyItem(item);
   if(category==='Investor Complaints')return complaintItem(item);
+  if(category==='ASCR')return ascrItem(item);
   return item.category===category;
+}
+function ascrYear(item){
+  const title=String(item.title||'');
+  let m=title.match(/(?:FY|financial year|year ended|year)\s*[-:]?\s*(20\d{2})\s*[-\/]\s*(\d{2,4})/i);
+  if(m){const end=String(m[2]).length===2?Number(String(m[1]).slice(0,2)+m[2]):Number(m[2]);return `${Number(m[1])}-${end}`;}
+  const date=item.pdfDate||item.xbrlDate||item.date;const d=new Date(String(date||'').replace('T',' '));
+  if(!Number.isNaN(d.getTime())){const start=d.getMonth()<3?d.getFullYear()-2:d.getFullYear()-1;return `${start}-${start+1}`;}
+  return '—';
+}
+function ascrRows(items){
+  const map=new Map();
+  for(const item of items.filter(ascrItem)){
+    const year=ascrYear(item);
+    const key=`${year}|${item.newsId||item.id}`;
+    const row={...item,year,xbrlDate:item.xbrlDate||item.date,pdfDate:item.pdfDate||item.date,xbrlRevisedDate:item.xbrlRevisedDate||'',pdfRevisedDate:item.pdfRevisedDate||'',xbrl:item.xbrl||xbrlUrl(item.newsId,item.scripCode)};
+    const old=map.get(key);if(!old||filingTime(row)>filingTime(old))map.set(key,row);
+  }
+  return [...map.values()].sort((a,b)=>{const ya=Number(String(a.year).slice(0,4))||0,yb=Number(String(b.year).slice(0,4))||0;return yb-ya||filingTime(b)-filingTime(a);});
 }
 
 async function fetchPage(page,from,to){
@@ -126,9 +154,10 @@ export async function onRequestGet({request}){
     const governance=category==='Corporate Governance'?[...filtered].sort((a,b)=>filingTime(b)-filingTime(a)):[];
     const relatedParty=category==='Related Party Transactions'?[...filtered].sort((a,b)=>filingTime(b)-filingTime(a)):[];
     const complaints=category==='Investor Complaints'?[...filtered].sort((a,b)=>filingTime(b)-filingTime(a)):[];
+    const ascr=category==='ASCR'?ascrRows(filtered):[];
     const pageSize=20;
-    const items=category==='Financial Results'?results.slice((page-1)*pageSize,page*pageSize):category==='Annual Reports'?annual.slice((page-1)*pageSize,page*pageSize):voting.length?voting.slice((page-1)*pageSize,page*pageSize):category==='Shareholding Pattern'?shareholding.slice((page-1)*pageSize,page*pageSize):category==='Corporate Governance'?governance.slice((page-1)*pageSize,page*pageSize):category==='Related Party Transactions'?relatedParty.slice((page-1)*pageSize,page*pageSize):category==='Investor Complaints'?complaints.slice((page-1)*pageSize,page*pageSize):filtered.slice((page-1)*pageSize,page*pageSize);
-    const total=category==='Financial Results'?results.length:category==='Annual Reports'?annual.length:category==='Shareholding Pattern'?shareholding.length:category==='Corporate Governance'?governance.length:category==='Related Party Transactions'?relatedParty.length:category==='Investor Complaints'?complaints.length:voting.length||filtered.length;
-    return Response.json({source:'BSE Limited',scripCode:BSE_SCRIP_CODE,isin:BSE_ISIN,company:BSE_COMPANY_NAME,page,total,items,results:category==='Financial Results'?results:undefined,annualReports:category==='Annual Reports'?annual:undefined,votingResults:voting.length?voting:undefined,shareholdingPatterns:category==='Shareholding Pattern'?shareholding:undefined,fetchedAt:new Date().toISOString()},{headers:{'Cache-Control':'public, max-age=120, s-maxage=300, stale-while-revalidate=600'}});
-  }catch(error){return Response.json({source:'BSE Limited',scripCode:BSE_SCRIP_CODE,isin:BSE_ISIN,company:BSE_COMPANY_NAME,error:'BSE investor data is temporarily unavailable.',details:error instanceof Error?error.message:String(error),items:[],results:[],annualReports:[],votingResults:[],shareholdingPatterns:[]},{status:502,headers:{'Cache-Control':'no-store'}});}
+    const items=category==='Financial Results'?results.slice((page-1)*pageSize,page*pageSize):category==='Annual Reports'?annual.slice((page-1)*pageSize,page*pageSize):voting.length?voting.slice((page-1)*pageSize,page*pageSize):category==='Shareholding Pattern'?shareholding.slice((page-1)*pageSize,page*pageSize):category==='Corporate Governance'?governance.slice((page-1)*pageSize,page*pageSize):category==='Related Party Transactions'?relatedParty.slice((page-1)*pageSize,page*pageSize):category==='Investor Complaints'?complaints.slice((page-1)*pageSize,page*pageSize):category==='ASCR'?ascr.slice((page-1)*pageSize,page*pageSize):filtered.slice((page-1)*pageSize,page*pageSize);
+    const total=category==='Financial Results'?results.length:category==='Annual Reports'?annual.length:category==='Shareholding Pattern'?shareholding.length:category==='Corporate Governance'?governance.length:category==='Related Party Transactions'?relatedParty.length:category==='Investor Complaints'?complaints.length:category==='ASCR'?ascr.length:voting.length||filtered.length;
+    return Response.json({source:'BSE Limited',scripCode:BSE_SCRIP_CODE,isin:BSE_ISIN,company:BSE_COMPANY_NAME,page,total,items,results:category==='Financial Results'?results:undefined,annualReports:category==='Annual Reports'?annual:undefined,votingResults:voting.length?voting:undefined,shareholdingPatterns:category==='Shareholding Pattern'?shareholding:undefined,ascr:category==='ASCR'?ascr:undefined,fetchedAt:new Date().toISOString()},{headers:{'Cache-Control':'public, max-age=120, s-maxage=300, stale-while-revalidate=600'}});
+  }catch(error){return Response.json({source:'BSE Limited',scripCode:BSE_SCRIP_CODE,isin:BSE_ISIN,company:BSE_COMPANY_NAME,error:'BSE investor data is temporarily unavailable.',details:error instanceof Error?error.message:String(error),items:[],results:[],annualReports:[],votingResults:[],shareholdingPatterns:[],ascr:[]},{status:502,headers:{'Cache-Control':'no-store'}});}
 }
