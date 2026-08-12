@@ -1,2 +1,2 @@
-2026-08-12 04:37 IST
-Investor Centre deployment refresh: Related Party Transactions BSE layout.
+2026-08-12 04:46 IST
+Investor Centre deployment refresh: BSE Statement of Investor Complaints table renderer finalized.
