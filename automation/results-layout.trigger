@@ -1,1 +1,1 @@
-results archive layout update requested 2026-08-12 v5 - archive supplied PDFs
+results archive layout update requested 2026-08-12 v6 - full repository hash match
