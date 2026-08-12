@@ -165,6 +165,11 @@ if INVESTORS_HTML.exists():
     if old_rows in html:
         html = html.replace(old_rows, new_rows)
         print('Enabled historical Results rows through FY 2013-14')
+    old_href = 'href="/results/${esc(label)}.pdf"'
+    new_href = 'href="https://raw.githubusercontent.com/kushagra0328/tilak-ventures-ir/main/results/${esc(label)}.pdf"'
+    if old_href in html:
+        html = html.replace(old_href, new_href)
+        print('Linked Results PDFs directly to GitHub results archive')
     INVESTORS_HTML.write_text(html, encoding='utf-8')
 
 if pending:
