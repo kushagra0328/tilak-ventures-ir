@@ -1,0 +1,73 @@
+name: Migrate Governance PDFs
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.event.head_commit.message != 'Migrate governance PDFs'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download legacy governance PDFs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p governance-policies
+          python3 - <<'PY'
+          import html, re, urllib.parse, urllib.request
+          from pathlib import Path
+          pages = [
+              'https://tilakfinance.wordpress.com/policies-2/',
+              'https://tilakfinance.wordpress.com/2015/06/whistle-blower-policy/',
+          ]
+          direct = [
+              'https://tilakfinance.files.wordpress.com/2015/06/whistle_blower_policy_tilak.pdf',
+              'https://tilakfinance.files.wordpress.com/2016/04/policy-on-material-subsidaries_tilak.pdf',
+              'https://tilakfinance.files.wordpress.com/2015/07/rpt_tilak.pdf',
+              'https://tilakfinance.files.wordpress.com/2016/04/terms-and-conditions-of-independent-director.pdf',
+              'https://tilakfinance.files.wordpress.com/2016/04/remuneration-policy_tilak.pdf',
+              'https://tilakfinance.files.wordpress.com/2016/07/policy-of-insider-trading.pdf',
+              'https://tilakfinance.files.wordpress.com/2016/04/familarisation-programme-for-id_tilak.pdf',
+              'https://tilakfinance.wordpress.com/wp-content/uploads/2018/07/tilak_17-18.pdf',
+          ]
+          urls = set(direct)
+          for page in pages:
+              try:
+                  req=urllib.request.Request(page,headers={'User-Agent':'Mozilla/5.0'})
+                  body=urllib.request.urlopen(req,timeout=30).read().decode('utf-8','ignore')
+                  for href in re.findall(r'href=[\"\']([^\"\']+\.pdf(?:\?[^\"\']*)?)[\"\']',body,re.I):
+                      urls.add(urllib.parse.urljoin(page,html.unescape(href)))
+              except Exception as e:
+                  print('Page fetch warning:', page, e)
+          for url in sorted(urls):
+              try:
+                  req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
+                  data=urllib.request.urlopen(req,timeout=60).read()
+                  if not data.startswith(b'%PDF'):
+                      print('Skipping non-PDF:',url); continue
+                  path=urllib.parse.urlparse(url).path
+                  name=Path(urllib.parse.unquote(path)).name
+                  if not name.lower().endswith('.pdf'): continue
+                  out=Path('governance-policies')/name
+                  out.write_bytes(data)
+                  print('Downloaded',out,len(data))
+              except Exception as e:
+                  print('Download warning:',url,e)
+          PY
+      - name: Commit migrated PDFs
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add governance-policies
+          if git diff --cached --quiet; then
+            echo 'No governance PDFs changed.'
+            exit 0
+          fi
+          git commit -m 'Migrate governance PDFs'
+          git push
