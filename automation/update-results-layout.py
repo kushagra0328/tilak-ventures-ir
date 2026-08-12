@@ -46,7 +46,6 @@ def period_window(name):
         return f'{year}0301', f'{year}0531'
     raise ValueError(name)
 
-
 missing = [name for name, digest in targets.items() if digest not in found]
 if missing:
     session = requests.Session()
@@ -97,7 +96,6 @@ if missing:
             )):
                 candidates.append(row)
 
-        # Prefer rows whose headline explicitly says financial results.
         candidates.sort(key=lambda row: (
             'financial result' not in ' '.join(str(row.get(k, '')) for k in ('NEWSSUB', 'HEADLINE')).lower(),
             'result' not in ' '.join(str(row.get(k, '')) for k in ('NEWSSUB', 'HEADLINE')).lower(),
@@ -131,24 +129,25 @@ if missing:
             print('Exact BSE filing not found for', name)
         time.sleep(0.25)
 
-missing = [name for name, digest in targets.items() if digest not in found]
-if missing:
-    raise SystemExit('Could not recover exact result PDFs: ' + ', '.join(missing))
-
 RESULTS_DIR.mkdir(exist_ok=True)
 for name, digest in targets.items():
+    if digest not in found:
+        continue
     destination = RESULTS_DIR / name
     source = found[digest]
     if source.resolve() != destination.resolve():
         shutil.copyfile(source, destination)
 
+available = [
+    {'file': name, 'url': f'results/{name}', 'sha256': digest_file(RESULTS_DIR / name)}
+    for name in targets
+    if (RESULTS_DIR / name).exists()
+]
 MANUAL_JSON.write_text(
     json.dumps({
         'policy': 'Static Company Archive. Historical result PDFs are stored locally in /results and are independent of BSE and WordPress.',
-        'results': [
-            {'file': name, 'url': f'results/{name}', 'sha256': digest_file(RESULTS_DIR / name)}
-            for name in targets
-        ],
+        'results': available,
+        'pending_exact_matches': [name for name, digest in targets.items() if digest not in found],
     }, indent=2) + '\n',
     encoding='utf-8',
 )
