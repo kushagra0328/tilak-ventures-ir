@@ -1,5 +1,4 @@
 from pathlib import Path
-import re
 
 path = Path('investors.html')
 html = path.read_text(encoding='utf-8')
@@ -22,21 +21,17 @@ const cell=(label,fy,quarter)=>{
 resultsView.innerHTML=`<table class="results-table"><thead><tr><th>Financial Year</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr></thead><tbody>${periods.map(row=>`<tr><td>${esc(row.financialYear)}</td><td>${cell(row.q1,Number(row.financialYear.slice(0,4)),'Q1')}</td><td>${cell(row.q2,Number(row.financialYear.slice(0,4)),'Q2')}</td><td>${cell(row.q3,Number(row.financialYear.slice(0,4)),'Q3')}</td><td>${cell(row.q4,Number(row.financialYear.slice(0,4)),'Q4')}</td></tr>`).join('')}</tbody></table><div class="results-foot">Historical financial results are maintained in the Company archive. Quarter links are placeholders until the corresponding PDF is uploaded.</div>`;
 }'''
 
-html, count = re.subn(
-    r'function renderResults\(rows\)\{.*?\}(?=function pdfIcon)',
-    lambda _m: new_renderer,
-    html,
-    count=1,
-    flags=re.S,
-)
-if count != 1:
-    raise SystemExit('Could not locate renderResults()')
+start = html.find('function renderResults(rows){')
+end = html.find('function pdfIcon', start)
+if start < 0 or end < 0:
+    raise SystemExit(f'Could not locate Results renderer: start={start}, end={end}')
+html = html[:start] + new_renderer + html[end:]
 
-hook = r"if\(isResults\)resultsView\.innerHTML='<div class=\"feed-empty\">Loading exchange financial results…</div>';"
-replacement = "if(isResults){status.innerHTML='Source: <strong>Company Archive</strong> · Historical Results';renderResults([]);return;}"
-html, count = re.subn(hook, lambda _m: replacement, html, count=1)
-if count != 1:
+old_hook = "if(isResults)resultsView.innerHTML='<div class=\"feed-empty\">Loading exchange financial results…</div>';"
+new_hook = "if(isResults){status.innerHTML='Source: <strong>Company Archive</strong> · Historical Results';renderResults([]);return;}"
+if old_hook not in html:
     raise SystemExit('Could not locate Results load hook')
+html = html.replace(old_hook, new_hook, 1)
 
 css = '''\n<style id="results-archive-layout">\n.result-link.result-placeholder::before{display:none!important}\n.result-link.result-placeholder{font-size:13px;font-weight:600;color:#0969e8;text-decoration:none;cursor:pointer}\n.result-link.result-placeholder:hover{text-decoration:underline}\n.results-table th,.results-table td{min-width:110px}\n.results-table th:first-child,.results-table td:first-child{min-width:150px}\n</style>\n'''
 if 'id="results-archive-layout"' not in html:
