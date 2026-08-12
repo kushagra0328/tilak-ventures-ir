@@ -12,12 +12,21 @@ MANUAL_JSON = ROOT / 'investor-manual-results.json'
 manifest = json.loads(MANIFEST_PATH.read_text(encoding='utf-8'))
 targets = manifest['files']
 
-# Match the supplied Results ZIP PDFs against the PDFs already archived in the
-# repository. This avoids any BSE/WordPress dependency while preserving the
-# exact supplied documents byte-for-byte.
+def digest_file(path):
+    h = hashlib.sha256()
+    with path.open('rb') as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+# Search the entire existing repository for exact byte-for-byte matches to the
+# supplied PDFs. This keeps the archive independent of BSE/WordPress while
+# allowing previously archived company documents to be reused.
 found = {}
-for path in (ROOT / 'governance-policies').rglob('*.pdf'):
-    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+for path in ROOT.rglob('*.pdf'):
+    if path.parts and path.parts[0] == 'results':
+        continue
+    digest = digest_file(path)
     if digest in targets.values():
         found[digest] = path
 
@@ -29,19 +38,14 @@ RESULTS_DIR.mkdir(exist_ok=True)
 for name, digest in targets.items():
     shutil.copyfile(found[digest], RESULTS_DIR / name)
 
-# Keep a simple machine-readable archive index for future CS handover.
 manual = {
     'policy': 'Static Company Archive. Historical result PDFs are stored locally in /results and are independent of BSE and WordPress.',
-    'results': [
-        {'file': name, 'url': f'results/{name}'}
-        for name in targets
-    ]
+    'results': [{'file': name, 'url': f'results/{name}'} for name in targets]
 }
 MANUAL_JSON.write_text(json.dumps(manual, indent=2) + '\n', encoding='utf-8')
 
 new_renderer = r'''function renderResults(rows){
 const periods=[];
-// Current FY is deliberately shown as not filed for every quarter, as instructed.
 periods.push({financialYear:'2026-2027',q1:null,q2:null,q3:null,q4:null,current:true});
 for(let fy=2025;fy>=2017;fy--){
  const next=fy+1;
