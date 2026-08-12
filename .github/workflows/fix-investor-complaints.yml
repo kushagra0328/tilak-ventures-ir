@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Finalize inline BSE investor complaints renderer
+      - name: Install final BSE investor complaints renderer
         shell: python
         run: |
           from pathlib import Path
@@ -22,28 +22,15 @@ jobs:
           p = Path('investors.html')
           s = p.read_text(encoding='utf-8')
 
-          # There must be only one renderer: the inline renderer in investors.html.
-          s = re.sub(r'\s*<script src="/investor-complaints-bse\.js\?v=[^"]+"></script>\s*', '\n', s)
+          # Remove all earlier attempts so only the final renderer controls this section.
+          s = re.sub(r'\s*<script[^>]+investor-complaints-bse\.js[^>]*></script>\s*', '\n', s)
 
-          # The first inline patch was generated through a YAML/Python layer and
-          # therefore contained double-escaped regex tokens. Normalize only that
-          # renderer so quarter/year extraction works correctly in the browser.
-          start = s.find('function renderInvestorComplaints(items){')
-          end = s.find('function renderList(items)', start)
-          if start != -1 and end != -1:
-              chunk = s[start:end]
-              chunk = chunk.replace(r'\\b', r'\b').replace(r'\\s', r'\s').replace(r'\\d', r'\d')
-              s = s[:start] + chunk + s[end:]
-
-          # Investor Complaints uses the BSE table container, not the generic feed list state.
-          s = s.replace(
-              "list.hidden=isResults||isAnnual||isVoting||isShareholding||isGovernance||isRelatedParty||isComplaints;",
-              "list.hidden=isResults||isAnnual||isVoting||isShareholding||isGovernance||isRelatedParty;"
-          )
-          s = s.replace(
-              "if(!isResults&&!isAnnual&&!isVoting&&!isShareholding&&!isGovernance&&!isRelatedParty)list.innerHTML='<div class=\"feed-empty\">Loading exchange filings…</div>';",
-              "if(!isResults&&!isAnnual&&!isVoting&&!isShareholding&&!isGovernance&&!isRelatedParty&&!isComplaints)list.innerHTML='<div class=\"feed-empty\">Loading exchange filings…</div>';"
-          )
+          # Load the final renderer after the page's existing inline code. It uses
+          # capture-phase event handling and therefore prevents the old complaint
+          # card renderer from replacing the BSE-style table.
+          tag = '<script src="investor-complaints-bse.js?v=20260812-final"></script>'
+          if tag not in s:
+              s = s.replace('</body>', tag + '\n</body>')
 
           p.write_text(s, encoding='utf-8')
 
@@ -54,5 +41,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add investors.html
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Finalize BSE investor complaints renderer'
+          git commit -m 'Load final BSE investor complaints renderer'
           git push
