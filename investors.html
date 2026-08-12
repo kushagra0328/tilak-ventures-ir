@@ -86,7 +86,11 @@ const cell=(label,fy,quarter)=>{
  const quarterMonth={Q1:6,Q2:9,Q3:12,Q4:3}[quarter];
  const filed=fy<currentFY || (fy===currentFY && quarterMonth<=currentMonth);
  if(!filed)return '<span class="result-empty">Not filed</span>';
- return `<a class="result-link result-placeholder" href="#" data-result-slot="${esc(`${fy}-${quarter}`)}" aria-label="${esc(label)} — PDF to be uploaded">${esc(label)}</a>`;
+ const yy=Number(String(label).slice(-2));
+ if((label.startsWith('Jun-')&&yy>=18&&yy<=25)||(label.startsWith('Sep-')&&(yy===17||(yy>=19&&yy<=25)))||(label.startsWith('Dec-')&&yy>=17&&yy<=25)||(label.startsWith('Mar-')&&yy>=18&&yy<=26)){
+  return `<a class="result-link result-placeholder" href="/results/${esc(label)}.pdf" target="_blank" rel="noopener noreferrer" data-result-slot="${esc(`${fy}-${quarter}`)}" aria-label="Open ${esc(label)} financial results PDF">${esc(label)}</a>`;
+ }
+ return '<span class="result-empty">Not available</span>';
 };
 resultsView.innerHTML=`<table class="results-table"><thead><tr><th>Financial Year</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr></thead><tbody>${periods.map(row=>`<tr><td>${esc(row.financialYear)}</td><td>${cell(row.q1,Number(row.financialYear.slice(0,4)),'Q1')}</td><td>${cell(row.q2,Number(row.financialYear.slice(0,4)),'Q2')}</td><td>${cell(row.q3,Number(row.financialYear.slice(0,4)),'Q3')}</td><td>${cell(row.q4,Number(row.financialYear.slice(0,4)),'Q4')}</td></tr>`).join('')}</tbody></table><div class="results-foot">Historical financial results are maintained in the Company archive. Quarter links are placeholders until the corresponding PDF is uploaded.</div>`;
 }function pdfIcon(item,label){if(!item?.pdf)return '<span class="result-empty">—</span>';return `<a class="annual-pdf" href="${esc(safeUrl(item.pdf))}" target="_blank" rel="noopener noreferrer" aria-label="Open ${esc(label||'PDF')}"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 2.75h8l4 4V21.25H6V2.75Z" stroke="currentColor" stroke-width="1.8"/><path d="M14 2.75v4h4M8.5 14.25h2.1c1.5 0 2.2-.65 2.2-1.7s-.7-1.7-2.2-1.7H8.5v5.1M13.7 15.95l1.2-5.1h1.1l1.2-5.1M14.25 14.3h2.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>`;}
