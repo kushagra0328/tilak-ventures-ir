@@ -24,7 +24,7 @@ resultsView.innerHTML=`<table class="results-table"><thead><tr><th>Financial Yea
 
 html, count = re.subn(
     r'function renderResults\(rows\)\{.*?\}(?=function pdfIcon)',
-    new_renderer,
+    lambda _m: new_renderer,
     html,
     count=1,
     flags=re.S,
@@ -34,7 +34,7 @@ if count != 1:
 
 hook = r"if\(isResults\)resultsView\.innerHTML='<div class=\"feed-empty\">Loading exchange financial results…</div>';"
 replacement = "if(isResults){status.innerHTML='Source: <strong>Company Archive</strong> · Historical Results';renderResults([]);return;}"
-html, count = re.subn(hook, replacement, html, count=1)
+html, count = re.subn(hook, lambda _m: replacement, html, count=1)
 if count != 1:
     raise SystemExit('Could not locate Results load hook')
 
