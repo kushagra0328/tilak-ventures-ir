@@ -76,7 +76,7 @@ function resultCell(item){return item?resultLink(item):'<span class="result-empt
 function renderResults(rows){
 const startFY=2026;
 const periods=[];
-for(let fy=startFY;fy>=2017;fy--){
+for(let fy=startFY;fy>=2013;fy--){
  const next=fy+1;
  periods.push({financialYear:`${fy}-${String(next).slice(-2)}`,q1:`Jun-${String(fy).slice(-2)}`,q2:`Sep-${String(fy).slice(-2)}`,q3:`Dec-${String(fy).slice(-2)}`,q4:`Mar-${String(next).slice(-2)}`});
 }
