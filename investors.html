@@ -88,7 +88,7 @@ const cell=(label,fy,quarter)=>{
  if(!filed)return '<span class="result-empty">Not filed</span>';
  const yy=Number(String(label).slice(-2));
  if((label.startsWith('Jun-')&&yy>=13&&yy<=25)||(label.startsWith('Sep-')&&yy>=13&&yy<=25)||(label.startsWith('Dec-')&&yy>=13&&yy<=25)||(label.startsWith('Mar-')&&yy>=13&&yy<=26)){
-  return `<a class="result-link result-placeholder" href="/results/${esc(label)}.pdf" target="_blank" rel="noopener noreferrer" data-result-slot="${esc(`${fy}-${quarter}`)}" aria-label="Open ${esc(label)} financial results PDF">${esc(label)}</a>`;
+  return `<a class="result-link result-placeholder" href="https://raw.githubusercontent.com/kushagra0328/tilak-ventures-ir/main/results/${esc(label)}.pdf" target="_blank" rel="noopener noreferrer" data-result-slot="${esc(`${fy}-${quarter}`)}" aria-label="Open ${esc(label)} financial results PDF">${esc(label)}</a>`;
  }
  return '<span class="result-empty">Not available</span>';
 };
