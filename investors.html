@@ -99,5 +99,6 @@ async function load(){const isResults=state.category==='Financial Results',isAnn
 buttons.forEach(button=>button.addEventListener('click',()=>{buttons.forEach(b=>b.classList.remove('active'));button.classList.add('active');state={category:button.dataset.category||'',query:button.dataset.query||'',page:1};load();}));prev.addEventListener('click',()=>{if(state.page>1){state.page--;load();}});next.addEventListener('click',()=>{state.page++;load();});load();
 </script>
 <script src="investor-complaints-bse.js?v=20260812-datafix"></script>
+<script src="mobile-nav.js?v=20260812-responsive1"></script>
 </body>
 </html>

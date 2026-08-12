@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  var CATEGORY='Corporate Governance';
+  var CATEGORY='Investor Complaints';
   var API='/api/investor-feed?page=1&category='+encodeURIComponent(CATEGORY);
   var BSE_FILINGS='https://www.bseindia.com/corporates/ann.html';
   var bound=false;
