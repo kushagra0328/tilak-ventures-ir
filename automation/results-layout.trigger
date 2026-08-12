@@ -1,1 +1,1 @@
-results archive layout update requested 2026-08-12 v7 - recover remaining exact PDFs
+results archive layout update requested 2026-08-12 v8 - finalize local archive
