@@ -1,1 +1,1 @@
-results archive layout update requested 2026-08-12 v6 - full repository hash match
+results archive layout update requested 2026-08-12 v7 - recover remaining exact PDFs
