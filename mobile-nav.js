@@ -111,4 +111,39 @@
       });
     }
   }
+
+  // Keep Related Party Transactions visually aligned with the BSE integrated-filing table.
+  // This runs after the main Investor Centre renderer so it does not interfere with BSE data loading.
+  var relatedView=document.getElementById('relatedPartyView');
+  if(relatedView){
+    var normaliseRelatedPartyTable=function(){
+      var noteLink=relatedView.querySelector('.related-party-note a');
+      if(noteLink){
+        noteLink.href='https://www.bseindia.com/stock-share-price/tilak-ventures-ltd/tilakventures/503663/financials/';
+        noteLink.textContent='click here';
+      }
+      relatedView.querySelectorAll('tbody tr').forEach(function(row){
+        var cells=row.querySelectorAll('td');
+        if(cells.length<7)return;
+        var quarterCell=cells[1];
+        if(quarterCell && !quarterCell.querySelector('a') && quarterCell.textContent.trim()!=='—'){
+          var existing=quarterCell.textContent.trim();
+          var pdfLink=row.querySelector('td:nth-child(4) a');
+          if(pdfLink){
+            var a=document.createElement('a');
+            a.className='related-party-quarter-link';
+            a.href=pdfLink.href;
+            a.target='_blank';
+            a.rel='noopener noreferrer';
+            a.textContent=existing;
+            quarterCell.textContent='';
+            quarterCell.appendChild(a);
+          }
+        }
+      });
+    };
+    var observer=new MutationObserver(function(){normaliseRelatedPartyTable();});
+    observer.observe(relatedView,{childList:true,subtree:true});
+    normaliseRelatedPartyTable();
+  }
 })();
