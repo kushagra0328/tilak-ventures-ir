@@ -1,0 +1,42 @@
+name: Fix Results PDF Links
+
+on:
+  push:
+    paths:
+      - 'automation/results-links.trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  fix-links:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Replace placeholder result links
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('investors.html')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''return `<a class="result-link result-placeholder" href="#" data-result-slot="${esc(`${fy}-${quarter}`)}" aria-label="${esc(label)} — PDF to be uploaded">${esc(label)}</a>`;'''
+          new = '''const yy=Number(String(label).slice(-2));\n if((label.startsWith('Jun-')&&yy>=18&&yy<=25)||(label.startsWith('Sep-')&&(yy===17||(yy>=19&&yy<=25)))||(label.startsWith('Dec-')&&yy>=17&&yy<=25)||(label.startsWith('Mar-')&&yy>=18&&yy<=26)){\n  return `<a class="result-link result-placeholder" href="/results/${esc(label)}.pdf" target="_blank" rel="noopener noreferrer" data-result-slot="${esc(`${fy}-${quarter}`)}" aria-label="Open ${esc(label)} financial results PDF">${esc(label)}</a>`;\n }\n return '<span class="result-empty">Not available</span>';'''
+
+          if old not in text:
+              raise SystemExit('Expected placeholder code was not found; no changes made.')
+
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          print('Updated investors.html result links.')
+          PY
+
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add investors.html
+          git commit -m "Fix historical financial result PDF links"
+          git push
