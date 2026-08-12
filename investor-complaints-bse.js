@@ -13,7 +13,7 @@
     var s=String((item&&item.quarter)||'')+' '+String((item&&item.title)||'');
     var m=s.match(/\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[\s,.-]+(20\d{2})\b/i);
     if(m){var map={jan:'Jan',january:'Jan',feb:'Feb',february:'Feb',mar:'Mar',march:'Mar',apr:'Apr',april:'Apr',may:'May',jun:'Jun',june:'Jun',jul:'Jul',july:'Jul',aug:'Aug',august:'Aug',sep:'Sep',sept:'Sep',september:'Sep',oct:'Oct',october:'Oct',nov:'Nov',november:'Nov',dec:'Dec',december:'Dec'};return (map[m[1].toLowerCase()]||m[1])+' '+m[2];}
-    return String((item&&item.quarter)||'—');
+    var raw=String((item&&item.quarter)||'').trim();if(raw)return raw;var d=parsed(item&&item.date);if(d){var m=d.getMonth()+1,y=d.getFullYear();if(m<=3)return 'Dec '+(y-1);if(m<=6)return 'Mar '+y;if(m<=9)return 'Jun '+y;return 'Sep '+y;}return '—';
   }
   function fy(q,item){
     var m=String(q).match(/^(Jan|Feb|Mar)\s+(20\d{2})$/i);
@@ -50,7 +50,7 @@
       var qcell=item&&item.pdf?'<a class="governance-quarter-link" href="'+esc(safe(item.pdf))+'" target="_blank" rel="noopener noreferrer">'+esc(r.q)+'</a>':'<span>'+esc(r.q)+'</span>';
       var xb=u&&u!=='#'?'<a class="xbrl-link" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">XBRL</a>':'<span class="result-empty">—</span>';
       return '<tr><td>'+esc(r.fy)+'</td><td>'+qcell+'</td><td>'+esc(item&&item.status||'New')+'</td><td>'+fmtDate(item&&item.date)+'</td><td>'+fmtDate(item&&item.revisedDate)+'</td><td>'+esc(item&&item.revisionReason||'—')+'</td><td>'+xb+'</td></tr>';
-    }).join(''):'<tr><td colspan="7" class="result-empty">No corporate-governance filings were returned by BSE.</td></tr>';
+    }).join(''):'<tr><td colspan="7" class="result-empty">No investor-complaint filings were returned by BSE.</td></tr>';
     view.innerHTML='<div class="governance-note">To view Integrated Filing (Governance) from March 2025 quarter, please <a href="'+BSE_FILINGS+'" target="_blank" rel="noopener noreferrer">click here</a>.</div><table class="governance-table"><thead><tr><th>Year</th><th>Quarter</th><th>Status</th><th>Filing Date Time</th><th>Revised Filing Date Time</th><th>Revision Reason</th><th>XBRL Link</th></tr></thead><tbody>'+body+'</tbody></table>';
   }
   function load(){
