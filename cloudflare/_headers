@@ -6,3 +6,15 @@
 
 /admin/*
   X-Robots-Tag: noindex, nofollow
+
+/investor-centre.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/investors.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/mobile-nav.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/functions/api/investor-feed.js
+  Cache-Control: no-cache, no-store, must-revalidate
