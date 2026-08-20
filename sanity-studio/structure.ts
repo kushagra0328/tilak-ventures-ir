@@ -4,6 +4,8 @@ const investorSections = [
   'Financial Results','Annual Reports','Board Meetings','Shareholders Meetings','Voting Results','Corporate Actions','Shareholding Pattern','SDD Shareholding Pattern','Corporate Governance','Integrated Filings','Statement of Deviation or Variation','Investor Complaints','Related Party Transactions','BRSR','ASCR','Bulk / Block Deals','Corporate Announcements'
 ]
 
+const websitePages = ['Home','About Us','Governance','Contact Us']
+
 export const structure: StructureResolver = (S) =>
   S.list()
     .title('Tilak Ventures CMS')
@@ -35,7 +37,33 @@ export const structure: StructureResolver = (S) =>
           S.list()
             .title('Governance')
             .items([
-              S.documentTypeListItem('governanceDocument').title('Governance Documents')
+              S.documentTypeListItem('governanceDocument').title('Governance Documents'),
+              S.documentTypeListItem('managementProfile').title('Management & Leadership'),
+              S.listItem()
+                .title('Governance Page Content')
+                .child(
+                  S.documentList()
+                    .title('Governance Page Content')
+                    .filter('_type == "siteSection" && page == "Governance"')
+                ),
             ])
+        ),
+      S.listItem()
+        .title('Website Pages')
+        .child(
+          S.list()
+            .title('Website Pages')
+            .items(
+              websitePages.map((page) =>
+                S.listItem()
+                  .title(page)
+                  .child(
+                    S.documentList()
+                      .title(page)
+                      .filter('_type == "siteSection" && page == $page')
+                      .params({page})
+                  )
+              )
+            )
         ),
     ])
