@@ -10,50 +10,73 @@
       .mobile-nav-toggle{display:inline-flex;align-items:center;justify-content:center;width:40px;height:38px;border:1px solid #d6dde3;border-radius:5px;background:#fff;color:#122333;font:700 11px Inter,Arial,sans-serif;cursor:pointer;flex:0 0 auto}.mobile-nav-toggle span{display:block;width:16px;height:2px;background:#122333;box-shadow:0 -5px 0 #122333,0 5px 0 #122333}
       .mobile-nav-panel{position:fixed;left:16px;right:16px;top:76px;z-index:100;background:#fff;border:1px solid #e3e7eb;border-radius:8px;box-shadow:0 18px 45px rgba(18,35,51,.16);padding:8px}.mobile-nav-panel.open{display:block}.mobile-nav-panel a{display:block;padding:13px 12px;border-bottom:1px solid #e3e7eb;color:#2d4050;font:600 12px/1.3 Inter,Arial,sans-serif}.mobile-nav-panel a:last-child{border-bottom:0}.mobile-nav-panel a.active{color:#122333;background:#f5f7f8}
       .investor-page{padding-top:20px!important}.investor-shell{display:block!important}.investor-sidebar{display:none!important}.investor-mobile-selector{display:block;margin:0 0 18px}.investor-mobile-selector label{display:block;margin:0 0 7px;color:#a7772b;font:700 9px/1.2 Inter,Arial,sans-serif;letter-spacing:.15em;text-transform:uppercase}.investor-mobile-selector select{width:100%;height:44px;border:1px solid #cfd6dc;border-radius:6px;background:#fff;color:#15202b;padding:0 12px;font:600 12px Inter,Arial,sans-serif}
-      .investor-head{padding-top:10px!important}.investor-head .kicker{margin-bottom:18px!important}.investor-head h1{font-size:clamp(40px,11vw,58px)!important;line-height:1!important}.feed-card{border-radius:7px}.feed-top{align-items:flex-start;flex-direction:column;gap:7px;padding:15px 16px}.feed-top h2{font-size:17px}.feed-status{font-size:9px;text-align:left!important}.results-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}.results-table,.annual-table,.voting-table,.shareholding-table,.governance-table,.related-party-table,.ascr-table,.bse-special-table{min-width:900px!important}
+      .investor-head{padding-top:10px!important}.investor-head .kicker{margin-bottom:18px!important}.investor-head h1{font-size:clamp(40px,11vw,58px)!important;line-height:1!important}.feed-card{border-radius:7px}.feed-top{align-items:flex-start;flex-direction:column;gap:7px;padding:15px 16px}.feed-top h2{font-size:17px}.results-wrap,.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}.results-table,.ir-table{min-width:900px!important}
     }
     @media (max-width:520px){.wrap{width:min(var(--max),calc(100% - 28px))}.top .brand{gap:8px}.top .brand .mark{width:35px!important;height:35px!important}.top .brand b{font-size:10px!important}.top .brand small{font-size:7px!important}.top .nav .cta{padding:8px 9px;font-size:9px}.mobile-nav-panel{top:70px;left:12px;right:12px}.investor-mobile-selector{margin-bottom:14px}.security-strip{margin:18px 0!important}.security-strip div{padding:12px 14px!important}}
-    .bse-special-table{width:100%;border-collapse:collapse;font-size:12px}.bse-special-table th{background:#24366f;color:#fff;text-align:center;padding:13px 10px;font-weight:700;border-right:1px solid rgba(255,255,255,.35);white-space:nowrap}.bse-special-table th:first-child{text-align:left}.bse-special-table td{padding:15px 10px;border-right:1px solid #d9dee5;border-bottom:1px solid #d9dee5;text-align:center;background:#fff;vertical-align:middle}.bse-special-table tbody tr:nth-child(even) td{background:#f7f8fa}.bse-special-table td:first-child{text-align:left;font-weight:650;white-space:nowrap}.bse-special-table a{color:#0969e8;text-decoration:none;font-weight:600;white-space:nowrap}.bse-special-table a:hover{text-decoration:underline}.bse-special-table .xbrl{display:inline-block;padding:2px 4px;background:#55a9d2;color:#fff;font-size:8px;font-weight:800}.bse-special-table .pdf-icon{display:inline-flex;align-items:center;justify-content:center;color:#ef2b1f;text-decoration:none;font-weight:800;line-height:1}.bse-special-table .pdf-icon svg{width:25px;height:25px}.bse-special-note{padding:14px 20px;border-top:1px solid #d9dee5;background:#fafbfc;font-size:10px;color:#707b86;line-height:1.6}
-    .ascr-table{min-width:1180px!important}.ascr-table th{white-space:normal;line-height:1.25}.ascr-table td{white-space:nowrap}.ascr-table th:nth-child(1){width:100px}.ascr-table th:nth-child(2),.ascr-table th:nth-child(3),.ascr-table th:nth-child(6),.ascr-table th:nth-child(7){min-width:190px}.ascr-table th:nth-child(4){min-width:180px}.ascr-table th:nth-child(5){min-width:90px}.ascr-table th:nth-child(8){min-width:110px}
   `;
-  var style=document.createElement('style');style.id='tilak-mobile-nav-css';style.textContent=css;document.head.appendChild(style);
+  var style=document.createElement('style');
+  style.id='tilak-mobile-nav-css';
+  style.textContent=css;
+  document.head.appendChild(style);
 
   var top=document.querySelector('.top .nav');
-  if(top){var toggle=document.createElement('button');toggle.className='mobile-nav-toggle';toggle.type='button';toggle.setAttribute('aria-label','Open menu');toggle.setAttribute('aria-expanded','false');toggle.innerHTML='<span aria-hidden="true"></span>';top.appendChild(toggle);var panel=document.createElement('div');panel.className='mobile-nav-panel';panel.setAttribute('aria-hidden','true');panel.innerHTML='<a href="index.html">Home</a><a href="about-us.html">About Us</a><a href="governance.html">Governance</a><a href="contact.html">Contact Us</a><a class="active" href="investor-centre.html">Investor Centre</a>';document.body.appendChild(panel);toggle.addEventListener('click',function(){var open=panel.classList.toggle('open');toggle.setAttribute('aria-expanded',String(open));panel.setAttribute('aria-hidden',String(!open));});document.addEventListener('click',function(e){if(!panel.contains(e.target)&&!toggle.contains(e.target)){panel.classList.remove('open');toggle.setAttribute('aria-expanded','false');panel.setAttribute('aria-hidden','true');}});}
+  if(top){
+    var toggle=document.createElement('button');
+    toggle.className='mobile-nav-toggle';
+    toggle.type='button';
+    toggle.setAttribute('aria-label','Open menu');
+    toggle.setAttribute('aria-expanded','false');
+    toggle.innerHTML='<span aria-hidden="true"></span>';
+    top.appendChild(toggle);
+
+    var panel=document.createElement('div');
+    panel.className='mobile-nav-panel';
+    panel.setAttribute('aria-hidden','true');
+    panel.innerHTML='<a href="index.html">Home</a><a href="about-us.html">About Us</a><a href="governance.html">Governance</a><a href="contact.html">Contact Us</a><a class="active" href="investor-centre.html">Investor Centre</a>';
+    document.body.appendChild(panel);
+
+    toggle.addEventListener('click',function(){
+      var open=panel.classList.toggle('open');
+      toggle.setAttribute('aria-expanded',String(open));
+      panel.setAttribute('aria-hidden',String(!open));
+    });
+
+    document.addEventListener('click',function(e){
+      if(!panel.contains(e.target)&&!toggle.contains(e.target)){
+        panel.classList.remove('open');
+        toggle.setAttribute('aria-expanded','false');
+        panel.setAttribute('aria-hidden','true');
+      }
+    });
+  }
 
   var sidebar=document.querySelector('.investor-sidebar');
-  if(sidebar){var main=document.querySelector('.investor-main');if(main){var box=document.createElement('div');box.className='investor-mobile-selector';box.innerHTML='<label for="investor-mobile-section">Investor Relations</label><select id="investor-mobile-section" aria-label="Investor Relations section"></select>';var select=box.querySelector('select');sidebar.querySelectorAll('button[data-category],button[data-query]').forEach(function(btn){var option=document.createElement('option');option.value=String(Array.from(sidebar.querySelectorAll('button')).indexOf(btn));option.textContent=btn.textContent.trim();if(btn.classList.contains('active'))option.selected=true;select.appendChild(option);});main.insertBefore(box,main.firstChild);select.addEventListener('change',function(){var btn=sidebar.querySelectorAll('button')[Number(select.value)];if(btn)btn.click();});document.addEventListener('click',function(){var active=sidebar.querySelector('button.active');if(!active)return;var idx=Array.from(sidebar.querySelectorAll('button')).indexOf(active);if(idx>=0)select.value=String(idx);});}}
-
-  function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
-  function safeUrl(v){try{var u=new URL(v||'',location.href);return /^https?:$/.test(u.protocol)?u.href:'#';}catch(e){return '#';}}
-  function asDate(v){var d=new Date(String(v||'').replace('T',' '));return isNaN(d.getTime())?0:d.getTime();}
-  function displayDate(v){if(!v)return'—';var d=new Date(String(v).replace('T',' '));if(isNaN(d.getTime()))return esc(v);return new Intl.DateTimeFormat('en-IN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true,timeZone:'Asia/Kolkata'}).format(d);}
-  function xbrl(item){var x=item&&item.xbrl;if(!x&&item&&item.newsId)x='https://www.bseindia.com/Msource/90D/CorpXbrlGen.aspx?Bsenewid='+encodeURIComponent(item.newsId)+'&Scripcode='+encodeURIComponent(item.scripCode||'503663');return x&&x!=='#'?'<a class="xbrl" href="'+esc(safeUrl(x))+'" target="_blank" rel="noopener noreferrer">XBRL</a>':'<span class="result-empty">—</span>';}
-  function pdf(item){if(!item||!item.pdf)return'<span class="result-empty">—</span>';return'<a class="pdf-icon" href="'+esc(safeUrl(item.pdf))+'" target="_blank" rel="noopener noreferrer" aria-label="Download PDF"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 2.75h8l4 4V21.25H6V2.75Z" stroke="currentColor" stroke-width="1.8"/><path d="M14 2.75v4h4M8.5 14.25h2.1c1.5 0 2.2-.65 2.2-1.7s-.7-1.7-2.2-1.7H8.5v5.1M13.7 15.95l1.2-5.1h1.1l1.2-5.1M14.25 14.3h2.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>';}
-  function period(item){var s=String((item&&item.quarter)||'')+' '+String((item&&item.title)||'');var m=s.match(/\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[\s,.-]+(20\d{2})\b/i);if(!m)return String((item&&item.quarter)||'—');var map={jan:'Jan',january:'Jan',feb:'Feb',february:'Feb',mar:'Mar',march:'Mar',apr:'Apr',april:'Apr',may:'May',jun:'Jun',june:'Jun',jul:'Jul',july:'Jul',aug:'Aug',august:'Aug',sep:'Sep',sept:'Sep',september:'Sep',oct:'Oct',october:'Oct',nov:'Nov',november:'Nov',dec:'Dec',december:'Dec'};return(map[m[1].toLowerCase()]||m[1])+' '+m[2];}
-  function fy(q,item){var m=String(q).match(/^(Jan|Feb|Mar)\s+(20\d{2})$/i);if(m)return(Number(m[2])-1)+' - '+m[2];var y=String(q).match(/20\d{2}/);if(y){var n=Number(y[0]);return(n-1)+' - '+n;}var d=new Date(String((item&&item.date)||'').replace('T',' '));if(!isNaN(d.getTime())){var n=d.getMonth()<3?d.getFullYear()-1:d.getFullYear();return n+' - '+(n+1);}return'—';}
-  function isGov(i){return /corporate governance|integrated filing\s*[-–—(]?\s*governance|reg\.?\s*27|regulation\s*27|governance report|governance compliance|compliance report on corporate governance/i.test(String((i&&i.category)||'')+' '+String((i&&i.title)||''));}
-  function isAscr(i){return /annual secretarial compliance|secretarial compliance report|\bASCR\b/i.test(String((i&&i.category)||'')+' '+String((i&&i.title)||''));}
-  function renderSpecial(category,items){
-    var id=category==='Corporate Governance'?'governanceView':'ascrView';var view=document.getElementById(id);if(!view){view=document.createElement('div');view.id=id;view.className='results-wrap';var card=document.querySelector('.feed-card');if(card)card.appendChild(view);}view.hidden=false;
-    var test=category==='Corporate Governance'?isGov:isAscr;var rows=(items||[]).filter(test).sort(function(a,b){return asDate(b.date)-asDate(a.date);});
-    if(category==='ASCR'){
-      if(!rows.length){view.innerHTML='<div class="feed-empty">No ASCR filings were returned by BSE.</div>';return;}
-      var ascrHtml=rows.map(function(i){
-        var year=i.year||fy('',i);
-        var xDate=i.xbrlDate||i.date, xrDate=i.xbrlRevisedDate||'';
-        var pDate=i.pdfDate||i.date, prDate=i.pdfRevisedDate||'';
-        return '<tr><td>'+esc(year)+'</td><td>'+displayDate(xDate)+'</td><td>'+displayDate(xrDate)+'</td><td>'+esc(i.revisionReason||'—')+'</td><td>'+xbrl(i)+'</td><td>'+displayDate(pDate)+'</td><td>'+displayDate(prDate)+'</td><td>'+pdf(i)+'</td></tr>';
-      }).join('');
-      view.innerHTML='<div class="feed-top"><h2>ASCR</h2><div class="feed-status">Source: <strong>BSE</strong> · Live filing feed</div></div><div class="results-wrap"><table class="bse-special-table ascr-table"><thead><tr><th>Year</th><th>Filing Date Time of XBRL</th><th>Revised Filing Date Time of XBRL</th><th>Revision Reason of XBRL</th><th>XBRL Link</th><th>Filing Date Time of PDF</th><th>Revised Filing Date Time of PDF</th><th>Download PDF</th></tr></thead><tbody>'+ascrHtml+'</tbody></table></div><div class="bse-special-note">Annual Secretarial Compliance Report filings are sourced directly from BSE Limited for scrip 503663. XBRL and PDF filing timestamps are kept separate where BSE provides them.</div>';
-    }else{
-      if(!rows.length){view.innerHTML='<div class="feed-empty">No Corporate Governance filings were returned by BSE.</div>';return;}
-      var html=rows.map(function(i){var q=period(i);var qCell=i.pdf?'<a href="'+esc(safeUrl(i.pdf))+'" target="_blank" rel="noopener noreferrer">'+esc(q)+'</a>':esc(q);return'<tr><td>'+esc(fy(q,i))+'</td><td>'+qCell+'</td><td>'+esc(i.status||'New')+'</td><td>'+displayDate(i.date)+'</td><td>'+displayDate(i.revisedDate)+'</td><td>'+esc(i.revisionReason||'—')+'</td><td>'+xbrl(i)+'</td></tr>';}).join('');
-      view.innerHTML='<div class="feed-top"><h2>Corporate Governance</h2><div class="feed-status">Source: <strong>BSE</strong> · Live filing feed</div></div><div class="results-wrap"><table class="bse-special-table"><thead><tr><th>Year</th><th>Quarter</th><th>Status</th><th>Filing Date Time</th><th>Revised Filing Date Time</th><th>Revision Reason</th><th>XBRL Link</th></tr></thead><tbody>'+html+'</tbody></table></div><div class="bse-special-note">Data is sourced from BSE Limited for scrip 503663. The quarter is linked to the underlying BSE PDF where available and XBRL opens the corresponding BSE XBRL filing.</div>';
+  if(sidebar){
+    var main=document.querySelector('.investor-main');
+    if(main){
+      var box=document.createElement('div');
+      box.className='investor-mobile-selector';
+      box.innerHTML='<label for="investor-mobile-section">Investor Relations</label><select id="investor-mobile-section" aria-label="Investor Relations section"></select>';
+      var select=box.querySelector('select');
+      var sidebarButtons=sidebar.querySelectorAll('button[data-category],button[data-query]');
+      sidebarButtons.forEach(function(btn){
+        var option=document.createElement('option');
+        option.value=String(Array.from(sidebar.querySelectorAll('button')).indexOf(btn));
+        option.textContent=btn.textContent.trim();
+        if(btn.classList.contains('active')) option.selected=true;
+        select.appendChild(option);
+      });
+      main.insertBefore(box,main.firstChild);
+      select.addEventListener('change',function(){
+        var btn=sidebar.querySelectorAll('button')[Number(select.value)];
+        if(btn) btn.click();
+      });
+      document.addEventListener('click',function(){
+        var active=sidebar.querySelector('button.active');
+        if(!active) return;
+        var idx=Array.from(sidebar.querySelectorAll('button')).indexOf(active);
+        if(idx>=0) select.value=String(idx);
+      });
     }
-    var title=document.getElementById('feedTitle');if(title)title.textContent=category==='ASCR'?'ASCR':'Corporate Governance';var status=document.getElementById('feedStatus');if(status)status.innerHTML='Source: <strong>BSE</strong> · Live filing feed';['resultsView','annualView','votingView','shareholdingView','relatedPartyView','feedList'].forEach(function(x){var el=document.getElementById(x);if(el)el.hidden=true;});
   }
-  async function fetchItems(category,query){try{var p=new URLSearchParams({page:'1',category:category});if(query)p.set('q',query);p.set('_',String(Date.now()));var r=await fetch('/api/investor-feed?'+p.toString(),{cache:'no-store',headers:{Accept:'application/json'}});if(!r.ok)return[];var d=await r.json();return Array.isArray(d.items)?d.items:[];}catch(e){return[];}}
-  async function loadSpecial(category){var query=category==='ASCR'?'ASCR':'corporate governance';var primary=await fetchItems(category,'');var fallback=await fetchItems('Corporate Announcements',query);var seen={};var all=primary.concat(fallback).filter(function(i){var k=i.id||i.newsId||String(i.title)+'|'+String(i.date);if(seen[k])return false;seen[k]=true;return true;});renderSpecial(category,all);}
-  if(sidebar){sidebar.querySelectorAll('button[data-category]').forEach(function(btn){var cat=btn.getAttribute('data-category');if(cat==='Corporate Governance'||cat==='ASCR'){btn.addEventListener('click',function(){setTimeout(function(){loadSpecial(cat);},120);});}});}
 })();
